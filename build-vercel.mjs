@@ -21,6 +21,9 @@ mkdirSync(FUNC, { recursive: true });
 cpSync('dist/server', FUNC, { recursive: true });
 console.log('✓ Copied server files to function directory');
 
+// Tell Node.js that .js files in this directory are ES modules
+writeFileSync(`${FUNC}/package.json`, JSON.stringify({ type: 'module' }, null, 2));
+
 // 3. Function entry point - wraps the TanStack Start fetch handler
 writeFileSync(`${FUNC}/index.mjs`, `
 import server from './server.js';
