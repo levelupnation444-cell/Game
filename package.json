@@ -8,7 +8,7 @@
   "scripts": {
     "dev": "vite dev --port 3000",
     "generate-routes": "tsr generate",
-    "build": "vite build",
+    "build": "vite build && echo '=== BUILD DONE ===' && echo '--- PWD ---' && pwd && echo '--- ENV ---' && env | grep -E 'VERCEL|NITRO|NODE' || true && echo '--- ls dist ---' && ls -la dist/ || true && echo '--- ls dist/server ---' && ls -la dist/server/ || true && echo '--- ls /vercel ---' && ls -la /vercel/ || true && echo '--- ls /vercel/output ---' && ls -laR /vercel/output/ || true && echo '--- .vercel/output ---' && ls -laR .vercel/output/ || true && echo '--- vercel output config ---' && cat /vercel/output/config.json || cat .vercel/output/config.json || echo 'no config.json found'",
     "preview": "vite preview",
     "test": "vitest run"
   },
