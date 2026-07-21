@@ -10,6 +10,9 @@ export const HealthScreen: React.FC = () => {
   const [analyzing, setAnalyzing] = useState(false);
   const [editingGoals, setEditingGoals] = useState(false);
 
+  // Optimistic water state
+  const [optimisticWater, setOptimisticWater] = useState<number | null>(null);
+
   const [calGoalInput, setCalGoalInput] = useState("2000");
   const [waterGoalInput, setWaterGoalInput] = useState("2500");
 
@@ -31,6 +34,8 @@ export const HealthScreen: React.FC = () => {
   useEffect(() => {
     fetchHealth();
   }, []);
+
+  const currentWater = optimisticWater !== null ? optimisticWater : (data?.totalWater ?? 0);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -58,11 +63,16 @@ export const HealthScreen: React.FC = () => {
 
   const handleAddWater = async (amount: number) => {
     try { trigger("selection"); } catch {}
+    const newWater = Math.max(0, currentWater + amount);
+    setOptimisticWater(newWater);
+
     try {
       await api.health.addWater(amount);
       await fetchHealth();
+      setOptimisticWater(null);
     } catch (e) {
-      console.error("Failed to add water", e);
+      console.error("Failed to update water", e);
+      setOptimisticWater(null);
     }
   };
 
@@ -97,15 +107,17 @@ export const HealthScreen: React.FC = () => {
   }
 
   const calProgress = Math.min(100, (data.totalCalories / data.calorieGoal) * 100);
-  const waterProgress = Math.min(100, (data.totalWater / data.waterGoal) * 100);
+  const waterProgress = Math.min(100, (currentWater / data.waterGoal) * 100);
 
   return (
     <div style={{ padding: "10px 0" }}>
       {/* Top Banner */}
-      <div style={{ textAlign: "center", marginBottom: "24px" }}>
+      <div style={{ textAlign: "center", marginBottom: "20px" }}>
         <span className="tag blue">Vitality</span>
-        <h1 className="headline" style={{ fontSize: "28px", marginTop: "10px" }}>Health Tracker</h1>
-        <p style={{ fontSize: "14px", color: "var(--text-3)", margin: "6px 0 0", fontWeight: "600" }}>
+        <h1 className="headline" style={{ fontSize: "24px", marginTop: "8px" }}>
+          Health Tracker
+        </h1>
+        <p style={{ fontSize: "14px", color: "var(--text-3)", margin: "4px 0 0", fontWeight: "600" }}>
           AI meal scan & daily hydration tracker.
         </p>
       </div>
@@ -153,23 +165,25 @@ export const HealthScreen: React.FC = () => {
         </div>
       )}
 
-      {/* Goals Progress Dashboard */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px", marginBottom: "24px" }}>
+      {/* Goals Progress Dashboard - Mobile Friendly Stack / Grid */}
+      <div className="health-grid" style={{ marginBottom: "20px" }}>
         {/* Calories Card */}
-        <div className="card">
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
-            <span className="form-label" style={{ margin: 0 }}>🔥 Calories</span>
-            <span style={{ fontSize: "12px", color: "var(--text-3)", fontWeight: "700" }}>
-              {data.totalCalories} / {data.calorieGoal} kcal
-            </span>
+        <div className="card" style={{ padding: "16px 14px" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "4px", marginBottom: "10px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span className="form-label" style={{ margin: 0 }}>🔥 Calories</span>
+              <span style={{ fontSize: "11px", color: "var(--text-3)", fontWeight: "700", whiteSpace: "nowrap" }}>
+                {data.totalCalories}/{data.calorieGoal} kcal
+              </span>
+            </div>
           </div>
-          <div className="bar-track" style={{ height: "14px", marginBottom: "12px" }}>
+          <div className="bar-track" style={{ height: "12px", marginBottom: "10px" }}>
             <div
               className={`bar-fill ${data.totalCalories >= data.calorieGoal ? "green" : "blue"}`}
               style={{ width: `${calProgress}%` }}
             />
           </div>
-          <div style={{ display: "flex", justifyContent: "space-between", fontSize: "11px", color: "var(--text-2)" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", color: "var(--text-2)", fontWeight: "600" }}>
             <span>P: {data.totalProtein}g</span>
             <span>C: {data.totalCarbs}g</span>
             <span>F: {data.totalFat}g</span>
@@ -177,25 +191,43 @@ export const HealthScreen: React.FC = () => {
         </div>
 
         {/* Water Card */}
-        <div className="card">
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
-            <span className="form-label" style={{ margin: 0 }}>💧 Hydration</span>
-            <span style={{ fontSize: "12px", color: "var(--text-3)", fontWeight: "700" }}>
-              {data.totalWater} / {data.waterGoal} ml
-            </span>
+        <div className="card" style={{ padding: "16px 14px" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "4px", marginBottom: "10px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span className="form-label" style={{ margin: 0 }}>💧 Hydration</span>
+              <span style={{ fontSize: "11px", color: "var(--text-3)", fontWeight: "700", whiteSpace: "nowrap" }}>
+                {currentWater}/{data.waterGoal} ml
+              </span>
+            </div>
           </div>
-          <div className="bar-track" style={{ height: "14px", marginBottom: "12px" }}>
+          <div className="bar-track" style={{ height: "12px", marginBottom: "10px" }}>
             <div
               className="bar-fill blue"
               style={{ width: `${waterProgress}%` }}
             />
           </div>
-          <div style={{ display: "flex", gap: "6px" }}>
-            <button className="btn small ghost" style={{ flex: 1, padding: "4px" }} onClick={() => handleAddWater(250)}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "4px" }}>
+            <button
+              className="btn small ghost"
+              style={{ padding: "6px 0px", fontSize: "9px" }}
+              onClick={() => handleAddWater(250)}
+            >
               +250ml
             </button>
-            <button className="btn small ghost" style={{ flex: 1, padding: "4px" }} onClick={() => handleAddWater(500)}>
+            <button
+              className="btn small ghost"
+              style={{ padding: "6px 0px", fontSize: "9px" }}
+              onClick={() => handleAddWater(500)}
+            >
               +500ml
+            </button>
+            <button
+              className="btn small danger"
+              style={{ padding: "6px 0px", fontSize: "9px" }}
+              onClick={() => handleAddWater(-250)}
+              disabled={currentWater <= 0}
+            >
+              -250ml
             </button>
           </div>
         </div>
@@ -203,11 +235,10 @@ export const HealthScreen: React.FC = () => {
 
       {/* AI Calorie Tracker Section */}
       <div className="card" style={{ marginBottom: "24px" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-          <div>
-            <span className="tag gold">Gemini 3.1 AI</span>
-            <h2 className="headline" style={{ fontSize: "18px", marginTop: "6px" }}>AI Meal Scanner</h2>
-          </div>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px", flexWrap: "wrap", gap: "10px" }}>
+          <h2 className="headline" style={{ fontSize: "16px", margin: 0 }}>
+            AI Meal Scanner
+          </h2>
           <input
             type="file"
             accept="image/*"
@@ -225,7 +256,7 @@ export const HealthScreen: React.FC = () => {
         </div>
 
         {analyzing && (
-          <div style={{ textAlign: "center", padding: "20px 0", color: "var(--gold)", fontWeight: "700" }}>
+          <div style={{ textAlign: "center", padding: "16px 0", color: "var(--gold)", fontWeight: "700" }}>
             ⚡ AI is analyzing your food photo...
           </div>
         )}
@@ -233,7 +264,7 @@ export const HealthScreen: React.FC = () => {
         {/* Meal Logs List */}
         <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
           {data.foodLogs.length === 0 ? (
-            <div style={{ textAlign: "center", padding: "20px", color: "var(--text-3)", fontStyle: "italic" }}>
+            <div style={{ textAlign: "center", padding: "16px", color: "var(--text-3)", fontStyle: "italic", fontSize: "14px" }}>
               No meals logged today. Take a photo to estimate calories!
             </div>
           ) : (
@@ -243,23 +274,24 @@ export const HealthScreen: React.FC = () => {
                 style={{
                   background: "var(--surface-2)",
                   border: "2px solid var(--border)",
-                  padding: "12px 14px",
+                  padding: "10px 12px",
                   display: "flex",
                   justifyContent: "space-between",
                   alignItems: "center",
+                  gap: "10px",
                 }}
               >
-                <div>
-                  <div style={{ fontWeight: "700", color: "var(--text-1)", fontSize: "16px" }}>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontWeight: "700", color: "var(--text-1)", fontSize: "15px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                     {item.name}
                   </div>
                   <div style={{ fontSize: "12px", color: "var(--text-3)" }}>
-                    P: {item.protein}g | C: {item.carbs}g | F: {item.fat}g
+                    P:{item.protein}g C:{item.carbs}g F:{item.fat}g
                   </div>
                 </div>
 
-                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                  <span style={{ fontWeight: "900", color: "var(--gold)", fontFamily: "Press Start 2P, monospace", fontSize: "12px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
+                  <span style={{ fontWeight: "900", color: "var(--gold)", fontFamily: "Press Start 2P, monospace", fontSize: "10px" }}>
                     {item.calories} kcal
                   </span>
                   <button
@@ -270,6 +302,7 @@ export const HealthScreen: React.FC = () => {
                       color: "var(--text-3)",
                       cursor: "pointer",
                       fontSize: "14px",
+                      padding: "4px",
                     }}
                   >
                     ✕

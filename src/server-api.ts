@@ -544,7 +544,7 @@ health.get("/", async (c) => {
   const totalProtein = foodLogs.reduce((acc, item) => acc + item.protein, 0);
   const totalCarbs = foodLogs.reduce((acc, item) => acc + item.carbs, 0);
   const totalFat = foodLogs.reduce((acc, item) => acc + item.fat, 0);
-  const totalWater = Number(waterRows.rows[0]?.total) || 0;
+  const totalWater = Math.max(0, Number(waterRows.rows[0]?.total) || 0);
 
   return c.json({
     calorieGoal: user.calorie_goal || 2000,
