@@ -4,7 +4,8 @@
   "scripts": {
     "start": "bun run server.ts",
     "build:client": "bun run --cwd client build",
-    "dev:client": "bun run --cwd client dev"
+    "dev:client": "bun run --cwd client dev",
+    "build": "cd client && bun install && bun run build && mv dist/* ../public/"
   },
   "devDependencies": {
     "@types/bun": "latest"
@@ -13,6 +14,7 @@
     "typescript": "^5"
   },
   "dependencies": {
+    "@hono/node-server": "^2.0.10",
     "@libsql/client": "^0.17.4",
     "hono": "^4.12.31",
     "jose": "^6.2.3",

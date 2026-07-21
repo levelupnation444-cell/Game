@@ -388,12 +388,21 @@ app.get("/api/content", async (c) => {
 });
 
 /* ─── Static files (client build) ──────────────────── */
+// In production Vercel environments, Vercel routes static files directly via rewrites.
+// Hono serves static files locally in dev.
 app.use("/assets/*", serveStatic({ root: "./client/dist" }));
 app.use("/favicon.ico", serveStatic({ root: "./client/dist" }));
 app.use("/manifest.json", serveStatic({ root: "./client/dist" }));
 app.get("*", serveStatic({ path: "./client/dist/index.html" }));
 
 /* ─── Start ─────────────────────────────────────────── */
-const port = Number(process.env.PORT || 3000);
-console.log(`🎮 LevelUp server running at http://localhost:${port}`);
-export default { port, fetch: app.fetch };
+if (typeof Bun !== "undefined") {
+  const port = Number(process.env.PORT || 3000);
+  console.log(`🎮 LevelUp server running at http://localhost:${port}`);
+  Bun.serve({
+    port,
+    fetch: app.fetch
+  });
+}
+
+export default app;
