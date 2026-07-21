@@ -4,6 +4,7 @@ import { api } from "../api";
 import type { ProfileData } from "../api";
 import { StatBar } from "../components/StatBar";
 import { HabitRow } from "../components/HabitRow";
+import { ForumSection } from "../components/ForumSection";
 
 interface DailyScreenProps {
   profile: ProfileData;
@@ -11,15 +12,14 @@ interface DailyScreenProps {
   onHelp: () => void;
 }
 
-/** Simple level-up dialog shown when all habits are completed for the first time */
 const LevelUpDialog: React.FC<{ dayNumber: number; onClose: () => void }> = ({ dayNumber, onClose }) => (
   <div className="dialog-overlay" onClick={onClose}>
     <div className="dialog-box" onClick={(e) => e.stopPropagation()}>
       <div style={{ fontSize: "56px", marginBottom: "12px", lineHeight: 1 }}>🏆</div>
-      <h2 className="headline" style={{ fontSize: "28px", marginBottom: "8px" }}>
+      <h2 className="headline" style={{ fontSize: "20px", marginBottom: "12px" }}>
         Save Point {String(dayNumber).padStart(2, "0")} Complete!
       </h2>
-      <p style={{ color: "var(--text-2)", fontSize: "14px", lineHeight: 1.6, marginBottom: "24px" }}>
+      <p style={{ color: "var(--text-2)", fontSize: "16px", lineHeight: 1.6, marginBottom: "24px" }}>
         All habits done. Streak extended. You're building something real — keep showing up.
       </p>
       <button className="btn green full" onClick={onClose}>
@@ -48,7 +48,6 @@ export const DailyScreen: React.FC<DailyScreenProps> = ({ profile, onRefresh, on
 
   const allCompleted = habits.every((h) => activeCompleted.includes(h.id));
 
-  // Show level-up dialog when all habits get ticked off for the first time
   useEffect(() => {
     if (allCompleted && !didShowDialog && !lootClaimedToday) {
       setShowLevelUp(true);
@@ -146,25 +145,25 @@ export const DailyScreen: React.FC<DailyScreenProps> = ({ profile, onRefresh, on
             <div style={{
               width: "40px",
               height: "40px",
-              borderRadius: "8px",
+              borderRadius: "0px",
               background: "rgba(76, 110, 245, 0.15)",
-              border: "2px solid var(--blue-dark)",
+              border: "3px solid var(--blue-dark)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               color: "var(--blue)",
-              fontWeight: "900",
-              fontFamily: "Nunito, sans-serif",
-              fontSize: "16px",
+              fontWeight: "400",
+              fontFamily: "Press Start 2P, monospace",
+              fontSize: "14px",
               flexShrink: 0,
             }}>
               {profile.user.name ? profile.user.name[0].toUpperCase() : "?"}
             </div>
             <div>
-              <div style={{ color: "var(--text-1)", fontWeight: "700", fontSize: "14px" }}>
+              <div style={{ color: "var(--text-1)", fontWeight: "700", fontSize: "16px" }}>
                 {profile.user.name}
               </div>
-              <div style={{ color: "var(--text-3)", fontSize: "11px", textTransform: "capitalize", fontWeight: "600" }}>
+              <div style={{ color: "var(--text-3)", fontSize: "13px", textTransform: "capitalize" }}>
                 {profile.user.class}
               </div>
             </div>
@@ -179,17 +178,17 @@ export const DailyScreen: React.FC<DailyScreenProps> = ({ profile, onRefresh, on
               style={{
                 width: "34px",
                 height: "34px",
-                borderRadius: "8px",
-                border: "2px solid var(--border-2)",
+                borderRadius: "0px",
+                border: "3px solid var(--border-2)",
                 background: "var(--surface-2)",
                 color: "var(--text-2)",
-                fontWeight: "800",
-                fontFamily: "Nunito, sans-serif",
+                fontWeight: "400",
+                fontFamily: "Press Start 2P, monospace",
                 cursor: "pointer",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                fontSize: "14px",
+                fontSize: "12px",
                 flexShrink: 0,
               }}
             >
@@ -218,7 +217,7 @@ export const DailyScreen: React.FC<DailyScreenProps> = ({ profile, onRefresh, on
             <span className="tag blue">Save Point {String(dayNumber).padStart(2, "0")}</span>
             <span className="tag">Day {dayNumber}</span>
           </div>
-          <h1 className="headline" style={{ fontSize: "22px" }}>Today's Save Point</h1>
+          <h1 className="headline" style={{ fontSize: "18px" }}>Today's Save Point</h1>
         </div>
 
         {/* Content cards */}
@@ -229,20 +228,20 @@ export const DailyScreen: React.FC<DailyScreenProps> = ({ profile, onRefresh, on
               📖 Today's Bible Verse
             </div>
             <div style={{ borderLeft: "3px solid var(--blue)", paddingLeft: "14px" }}>
-              <p style={{ color: "var(--text-1)", fontStyle: "italic", fontSize: "15px", lineHeight: "1.6", margin: "0 0 6px" }}>
+              <p style={{ color: "var(--text-1)", fontStyle: "italic", fontSize: "18px", lineHeight: "1.5", margin: "0 0 6px" }}>
                 {content.verse}
               </p>
-              <span style={{ fontSize: "12px", color: "var(--text-3)", fontWeight: "600" }}>{content.ref}</span>
+              <span style={{ fontSize: "14px", color: "var(--text-3)" }}>{content.ref}</span>
             </div>
           </div>
 
           {/* Focus word */}
           <div className="card">
             <div className="form-label" style={{ marginBottom: "6px" }}>Today's Focus Word</div>
-            <h2 className="headline" style={{ color: "var(--blue)", fontSize: "24px", marginBottom: "6px" }}>
+            <h2 className="headline" style={{ color: "var(--blue)", fontSize: "20px", marginBottom: "6px" }}>
               {content.focusWord}
             </h2>
-            <p style={{ color: "var(--text-2)", fontSize: "13.5px", lineHeight: 1.6, margin: 0 }}>
+            <p style={{ color: "var(--text-2)", fontSize: "16px", lineHeight: 1.5, margin: 0 }}>
               {content.focusDesc}
             </p>
           </div>
@@ -250,7 +249,7 @@ export const DailyScreen: React.FC<DailyScreenProps> = ({ profile, onRefresh, on
           {/* Daily mission */}
           <div className="card">
             <div className="form-label" style={{ marginBottom: "6px" }}>🎯 Daily Mission</div>
-            <p style={{ color: "var(--text-1)", fontSize: "14px", lineHeight: 1.6, margin: 0 }}>
+            <p style={{ color: "var(--text-1)", fontSize: "16px", lineHeight: 1.5, margin: 0 }}>
               {content.mission}
             </p>
           </div>
@@ -274,19 +273,18 @@ export const DailyScreen: React.FC<DailyScreenProps> = ({ profile, onRefresh, on
               <div style={{
                 display: "flex",
                 justifyContent: "space-between",
-                fontSize: "11px",
-                fontWeight: "700",
+                fontSize: "9px",
+                fontFamily: "Press Start 2P, monospace",
                 color: "var(--text-3)",
                 marginBottom: "8px",
                 textTransform: "uppercase",
-                letterSpacing: "0.08em",
               }}>
                 <span>Progress</span>
                 <span style={{ color: allCompleted ? "var(--green)" : "var(--text-3)" }}>
                   {activeCompleted.length} / {habits.length}
                 </span>
               </div>
-              <div className="bar-track" style={{ height: "10px" }}>
+              <div className="bar-track" style={{ height: "12px" }}>
                 <div
                   className={`bar-fill ${allCompleted ? "green" : "blue"}`}
                   style={{ width: `${progress}%` }}
@@ -298,7 +296,7 @@ export const DailyScreen: React.FC<DailyScreenProps> = ({ profile, onRefresh, on
           {/* Evening reflection */}
           <div className="card">
             <div className="form-label" style={{ marginBottom: "10px" }}>🌙 Evening Reflection</div>
-            <label className="form-label" style={{ fontSize: "10px", marginBottom: "6px", display: "block" }}>
+            <label className="form-label" style={{ fontSize: "8px", marginBottom: "6px", display: "block" }}>
               One Win Today:
             </label>
             <textarea
@@ -321,7 +319,7 @@ export const DailyScreen: React.FC<DailyScreenProps> = ({ profile, onRefresh, on
 
           {/* Loot drop */}
           {allCompleted && (
-            <div className="card" style={{ border: "2px solid var(--gold-dark)" }}>
+            <div className="card" style={{ border: "3px solid var(--gold-dark)" }}>
               <div style={{
                 display: "flex",
                 alignItems: "center",
@@ -329,7 +327,7 @@ export const DailyScreen: React.FC<DailyScreenProps> = ({ profile, onRefresh, on
                 marginBottom: "12px",
               }}>
                 <span style={{ fontSize: "22px" }}>🎁</span>
-                <h3 className="headline" style={{ fontSize: "16px", color: "var(--gold)" }}>
+                <h3 className="headline" style={{ fontSize: "14px", color: "var(--gold)" }}>
                   Loot Drop
                 </h3>
               </div>
@@ -341,13 +339,13 @@ export const DailyScreen: React.FC<DailyScreenProps> = ({ profile, onRefresh, on
                   gap: "8px",
                   color: "var(--green)",
                   fontWeight: "700",
-                  fontSize: "14px",
+                  fontSize: "16px",
                 }}>
                   ✓ Save Complete — Loot claimed for today.
                 </div>
               ) : (
                 <>
-                  <p style={{ fontSize: "13px", color: "var(--text-2)", margin: "0 0 14px", lineHeight: 1.5 }}>
+                  <p style={{ fontSize: "15px", color: "var(--text-2)", margin: "0 0 14px", lineHeight: 1.5 }}>
                     You completed Save Point {String(dayNumber).padStart(2, "0")}. Claim your reward.
                   </p>
                   <label className="form-label" style={{ marginBottom: "6px", display: "block" }}>
@@ -367,6 +365,9 @@ export const DailyScreen: React.FC<DailyScreenProps> = ({ profile, onRefresh, on
               )}
             </div>
           )}
+
+          {/* Pathfinder Forum Section */}
+          <ForumSection />
         </div>
       </div>
     </>

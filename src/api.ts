@@ -55,6 +55,28 @@ export interface ProfileData {
   content: Content;
 }
 
+export interface ForumComment {
+  id: string;
+  postId: string;
+  userId: string;
+  userName: string;
+  userClass: string;
+  content: string;
+  createdAt: string;
+}
+
+export interface ForumPost {
+  id: string;
+  userId: string;
+  userName: string;
+  userClass: string;
+  title: string;
+  content: string;
+  createdAt: string;
+  commentsCount: number;
+  comments?: ForumComment[];
+}
+
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(path, {
     ...options,
@@ -91,5 +113,11 @@ export const api = {
   },
   leaderboard: {
     get: () => request<{ leaderboard: LeaderboardEntry[] }>("/api/leaderboard"),
+  },
+  forum: {
+    getPosts: () => request<{ posts: ForumPost[] }>("/api/forum/posts"),
+    createPost: (title: string, content: string) => request<{ post: ForumPost }>("/api/forum/posts", { method: "POST", body: JSON.stringify({ title, content }) }),
+    getPost: (id: string) => request<{ post: ForumPost; comments: ForumComment[] }>(`/api/forum/posts/${id}`),
+    addComment: (postId: string, content: string) => request<{ comment: ForumComment }>(`/api/forum/posts/${postId}/comments`, { method: "POST", body: JSON.stringify({ content }) }),
   },
 };

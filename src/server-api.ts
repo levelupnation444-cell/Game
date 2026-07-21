@@ -101,7 +101,6 @@ auth.post("/magic", async (c) => {
   const { email } = await c.req.json();
   if (!email || !email.includes("@")) return c.json({ error: "Invalid email" }, 400);
 
-  // upsert user
   const userId = nanoid();
   const today = new Date().toISOString().slice(0, 10);
   await db.execute({
@@ -115,7 +114,6 @@ auth.post("/magic", async (c) => {
   if (!firstUser || !firstUser.id) return c.json({ error: "Failed to create user" }, 500);
   const uid = firstUser.id as string;
 
-  // create magic token
   const tokenId = nanoid(40);
   const expires = new Date(Date.now() + 15 * 60 * 1000).toISOString();
   await db.execute({
@@ -146,7 +144,6 @@ auth.post("/magic", async (c) => {
       `,
     });
   } else {
-    // Dev fallback — log link to console
     console.log("\n🔗 MAGIC LINK (dev mode, no Resend key):", magicUrl, "\n");
   }
 
@@ -173,7 +170,6 @@ auth.get("/verify", async (c) => {
   if (!firstUser || !firstUser.id) return c.redirect("/?error=expired");
   const uid = firstUser.id as string;
 
-  // Ensure stats row exists
   await db.execute({
     sql: `INSERT OR IGNORE INTO stats (user_id, last_visit_date) VALUES (?, ?)`,
     args: [uid, new Date().toISOString().slice(0, 10)],
@@ -247,7 +243,6 @@ profile.get("/", async (c) => {
     args: [user.id, today],
   });
 
-  // Compute day number from start_date
   const startDate = user.start_date;
   const dayNum = Math.max(
     1,
@@ -326,7 +321,6 @@ habits.post("/toggle", async (c) => {
       sql: "INSERT OR IGNORE INTO habits_log (id, user_id, habit_id, date) VALUES (?, ?, ?, ?)",
       args: [nanoid(), user.id, habitId, today],
     });
-    // bump stat
     await db.execute({
       sql: `INSERT INTO stats (user_id, ${habit.stat}, last_visit_date) VALUES (?, 5, ?)
             ON CONFLICT(user_id) DO UPDATE SET
@@ -339,14 +333,12 @@ habits.post("/toggle", async (c) => {
       sql: "DELETE FROM habits_log WHERE user_id = ? AND habit_id = ? AND date = ?",
       args: [user.id, habitId, today],
     });
-    // drop stat
     await db.execute({
       sql: `UPDATE stats SET ${habit.stat} = MAX(0, ${habit.stat} - 5) WHERE user_id = ?`,
       args: [user.id],
     });
   }
 
-  // check if all habits complete → update streak
   const doneRows = await db.execute({
     sql: "SELECT COUNT(*) as cnt FROM habits_log WHERE user_id = ? AND date = ?",
     args: [user.id, today],
@@ -413,6 +405,101 @@ game.post("/reflection", async (c) => {
 });
 
 app.route("/api/game", game);
+
+/* ─── Forum routes ──────────────────────────────────── */
+const forum = new Hono<Env>();
+
+forum.use("*", async (c, next) => {
+  const user = await getUser(c);
+  if (!user) return c.json({ error: "Unauthorized" }, 401);
+  c.set("user", user);
+  await next();
+});
+
+forum.get("/posts", async (c) => {
+  const rows = await db.execute({
+    sql: `SELECT p.id, p.user_id as userId, p.user_name as userName, p.user_class as userClass,
+                 p.title, p.content, p.created_at as createdAt,
+                 (SELECT COUNT(*) FROM forum_comments c WHERE c.post_id = p.id) as commentsCount
+          FROM forum_posts p
+          ORDER BY p.created_at DESC`,
+    args: [],
+  });
+  return c.json({ posts: rows.rows });
+});
+
+forum.post("/posts", async (c) => {
+  const user = c.get("user");
+  const { title, content } = await c.req.json();
+  if (!title || !title.trim() || !content || !content.trim()) {
+    return c.json({ error: "Title and content required" }, 400);
+  }
+
+  const postId = nanoid();
+  await db.execute({
+    sql: `INSERT INTO forum_posts (id, user_id, user_name, user_class, title, content)
+          VALUES (?, ?, ?, ?, ?, ?)`,
+    args: [postId, user.id, user.name || "Anonymous", user.class || "Wanderer", title.trim(), content.trim()],
+  });
+
+  const postRow = await db.execute({
+    sql: `SELECT p.id, p.user_id as userId, p.user_name as userName, p.user_class as userClass,
+                 p.title, p.content, p.created_at as createdAt, 0 as commentsCount
+          FROM forum_posts p WHERE id = ?`,
+    args: [postId],
+  });
+
+  return c.json({ post: postRow.rows[0] });
+});
+
+forum.get("/posts/:id", async (c) => {
+  const postId = c.req.param("id");
+  const postRow = await db.execute({
+    sql: `SELECT p.id, p.user_id as userId, p.user_name as userName, p.user_class as userClass,
+                 p.title, p.content, p.created_at as createdAt,
+                 (SELECT COUNT(*) FROM forum_comments c WHERE c.post_id = p.id) as commentsCount
+          FROM forum_posts p WHERE id = ?`,
+    args: [postId],
+  });
+
+  if (!postRow.rows.length) return c.json({ error: "Post not found" }, 404);
+
+  const commentsRow = await db.execute({
+    sql: `SELECT c.id, c.post_id as postId, c.user_id as userId, c.user_name as userName,
+                 c.user_class as userClass, c.content, c.created_at as createdAt
+          FROM forum_comments c WHERE post_id = ? ORDER BY c.created_at ASC`,
+    args: [postId],
+  });
+
+  return c.json({ post: postRow.rows[0], comments: commentsRow.rows });
+});
+
+forum.post("/posts/:id/comments", async (c) => {
+  const user = c.get("user");
+  const postId = c.req.param("id");
+  const { content } = await c.req.json();
+  if (!content || !content.trim()) {
+    return c.json({ error: "Comment content required" }, 400);
+  }
+
+  const commentId = nanoid();
+  await db.execute({
+    sql: `INSERT INTO forum_comments (id, post_id, user_id, user_name, user_class, content)
+          VALUES (?, ?, ?, ?, ?, ?)`,
+    args: [commentId, postId, user.id, user.name || "Anonymous", user.class || "Wanderer", content.trim()],
+  });
+
+  const commentRow = await db.execute({
+    sql: `SELECT c.id, c.post_id as postId, c.user_id as userId, c.user_name as userName,
+                 c.user_class as userClass, c.content, c.created_at as createdAt
+          FROM forum_comments c WHERE id = ?`,
+    args: [commentId],
+  });
+
+  return c.json({ comment: commentRow.rows[0] });
+});
+
+app.route("/api/forum", forum);
 
 /* ─── Leaderboard ───────────────────────────────────── */
 app.get("/api/leaderboard", async (c) => {
