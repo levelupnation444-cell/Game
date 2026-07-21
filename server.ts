@@ -59,17 +59,34 @@ async function verifyToken(token: string) {
   }
 }
 
+interface UserRow {
+  id: string;
+  email: string;
+  name: string;
+  class: string;
+  start_date: string;
+  seen_how: number;
+  seen_level_intro: number;
+  created_at: string;
+}
+
 async function getUser(c: any) {
   const token = getCookie(c, "session");
   if (!token) return null;
   const payload = await verifyToken(token);
   if (!payload?.sub) return null;
   const row = await db.execute({ sql: "SELECT * FROM users WHERE id = ?", args: [payload.sub as string] });
-  return row.rows[0] || null;
+  return (row.rows[0] as unknown as UserRow) || null;
+}
+
+type Env = {
+  Variables: {
+    user: UserRow;
+  }
 }
 
 /* ─── Auth routes ───────────────────────────────────── */
-const auth = new Hono();
+const auth = new Hono<Env>();
 
 auth.post("/magic", async (c) => {
   const { email } = await c.req.json();
@@ -85,7 +102,9 @@ auth.post("/magic", async (c) => {
   });
 
   const userRow = await db.execute({ sql: "SELECT id FROM users WHERE email = ?", args: [email] });
-  const uid = userRow.rows[0].id as string;
+  const firstUser = userRow.rows[0];
+  if (!firstUser || !firstUser.id) return c.json({ error: "Failed to create user" }, 500);
+  const uid = firstUser.id as string;
 
   // create magic token
   const tokenId = nanoid(40);
@@ -137,10 +156,13 @@ auth.get("/verify", async (c) => {
   if (!row.rows.length) return c.redirect("/?error=expired");
 
   const magicRow = row.rows[0];
+  if (!magicRow || !magicRow.email) return c.redirect("/?error=expired");
   await db.execute({ sql: "UPDATE magic_tokens SET used = 1 WHERE token = ?", args: [token] });
 
   const userRow = await db.execute({ sql: "SELECT id FROM users WHERE email = ?", args: [magicRow.email as string] });
-  const uid = userRow.rows[0].id as string;
+  const firstUser = userRow.rows[0];
+  if (!firstUser || !firstUser.id) return c.redirect("/?error=expired");
+  const uid = firstUser.id as string;
 
   // Ensure stats row exists
   await db.execute({
@@ -174,7 +196,7 @@ auth.get("/me", async (c) => {
 app.route("/api/auth", auth);
 
 /* ─── Profile routes ────────────────────────────────── */
-const profile = new Hono();
+const profile = new Hono<Env>();
 
 profile.use("*", async (c, next) => {
   const user = await getUser(c);
@@ -183,17 +205,28 @@ profile.use("*", async (c, next) => {
   await next();
 });
 
+interface DBStats {
+  faith?: number;
+  discipline?: number;
+  focus?: number;
+  energy?: number;
+  purpose?: number;
+  streak?: number;
+  last_completed_date?: string;
+  last_visit_date?: string;
+}
+
 profile.get("/", async (c) => {
-  const user = c.get("user") as any;
+  const user = c.get("user");
   const statsRow = await db.execute({ sql: "SELECT * FROM stats WHERE user_id = ?", args: [user.id] });
-  const stats = statsRow.rows[0] || {};
+  const stats = (statsRow.rows[0] as unknown as DBStats) || {};
 
   const today = new Date().toISOString().slice(0, 10);
   const habitRows = await db.execute({
     sql: "SELECT habit_id FROM habits_log WHERE user_id = ? AND date = ?",
     args: [user.id, today],
   });
-  const completedToday = habitRows.rows.map((r) => r.habit_id);
+  const completedToday = habitRows.rows.map((r) => r.habit_id as string);
 
   const lootRows = await db.execute({
     sql: "SELECT * FROM loot_log WHERE user_id = ? AND date = ?",
@@ -206,7 +239,7 @@ profile.get("/", async (c) => {
   });
 
   // Compute day number from start_date
-  const startDate = user.start_date as string;
+  const startDate = user.start_date;
   const dayNum = Math.max(1, Math.round((new Date(today + "T00:00:00").getTime() - new Date(startDate + "T00:00:00").getTime()) / 86400000) + 1);
   const content = CONTENT[(dayNum - 1) % CONTENT.length];
 
@@ -224,14 +257,14 @@ profile.get("/", async (c) => {
     habits: HABITS,
     completedToday,
     lootClaimedToday: lootRows.rows.length > 0,
-    reflection: reflectionRow.rows[0]?.text || "",
+    reflection: (reflectionRow.rows[0]?.text as string) || "",
     dayNumber: dayNum,
     content,
   });
 });
 
 profile.post("/setup", async (c) => {
-  const user = c.get("user") as any;
+  const user = c.get("user");
   const { name, cls } = await c.req.json();
   if (!name || !cls) return c.json({ error: "name and cls required" }, 400);
   await db.execute({
@@ -242,13 +275,13 @@ profile.post("/setup", async (c) => {
 });
 
 profile.post("/seen-how", async (c) => {
-  const user = c.get("user") as any;
+  const user = c.get("user");
   await db.execute({ sql: "UPDATE users SET seen_how = 1 WHERE id = ?", args: [user.id] });
   return c.json({ ok: true });
 });
 
 profile.post("/seen-intro", async (c) => {
-  const user = c.get("user") as any;
+  const user = c.get("user");
   await db.execute({ sql: "UPDATE users SET seen_level_intro = 1 WHERE id = ?", args: [user.id] });
   return c.json({ ok: true });
 });
@@ -256,7 +289,7 @@ profile.post("/seen-intro", async (c) => {
 app.route("/api/profile", profile);
 
 /* ─── Habits routes ─────────────────────────────────── */
-const habits = new Hono();
+const habits = new Hono<Env>();
 
 habits.use("*", async (c, next) => {
   const user = await getUser(c);
@@ -266,7 +299,7 @@ habits.use("*", async (c, next) => {
 });
 
 habits.post("/toggle", async (c) => {
-  const user = c.get("user") as any;
+  const user = c.get("user");
   const { habitId, completed } = await c.req.json();
   const today = new Date().toISOString().slice(0, 10);
 
@@ -303,15 +336,15 @@ habits.post("/toggle", async (c) => {
     sql: "SELECT COUNT(*) as cnt FROM habits_log WHERE user_id = ? AND date = ?",
     args: [user.id, today],
   });
-  const doneCount = Number(doneRows.rows[0].cnt);
+  const doneCount = Number(doneRows.rows[0]?.cnt ?? 0);
   const allDone = doneCount >= HABITS.length;
 
   if (allDone) {
     const statsRow = await db.execute({ sql: "SELECT * FROM stats WHERE user_id = ?", args: [user.id] });
-    const s = statsRow.rows[0] as any;
-    if (s?.last_completed_date !== today) {
+    const s = (statsRow.rows[0] as unknown as DBStats) || {};
+    if (s.last_completed_date !== today) {
       const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
-      const newStreak = s?.last_completed_date === yesterday ? Number(s.streak) + 1 : 1;
+      const newStreak = s.last_completed_date === yesterday ? Number(s.streak ?? 0) + 1 : 1;
       await db.execute({
         sql: "UPDATE stats SET streak = ?, last_completed_date = ? WHERE user_id = ?",
         args: [newStreak, today, user.id],
@@ -325,7 +358,7 @@ habits.post("/toggle", async (c) => {
 app.route("/api/habits", habits);
 
 /* ─── Loot & Reflection ─────────────────────────────── */
-const game = new Hono();
+const game = new Hono<Env>();
 
 game.use("*", async (c, next) => {
   const user = await getUser(c);
@@ -335,7 +368,7 @@ game.use("*", async (c, next) => {
 });
 
 game.post("/loot/claim", async (c) => {
-  const user = c.get("user") as any;
+  const user = c.get("user");
   const { day, text } = await c.req.json();
   const today = new Date().toISOString().slice(0, 10);
 
@@ -353,7 +386,7 @@ game.post("/loot/claim", async (c) => {
 });
 
 game.post("/reflection", async (c) => {
-  const user = c.get("user") as any;
+  const user = c.get("user");
   const { text } = await c.req.json();
   const today = new Date().toISOString().slice(0, 10);
   await db.execute({
