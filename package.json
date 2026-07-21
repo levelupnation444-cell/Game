@@ -8,7 +8,7 @@
   "scripts": {
     "dev": "vite dev --port 3000",
     "generate-routes": "tsr generate",
-    "build": "vite build && node build-vercel.mjs",
+    "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run"
   },
@@ -25,6 +25,7 @@
     "hono": "^4.12.31",
     "jose": "^6.2.3",
     "lucide-react": "^0.545.0",
+    "nitro": "^3.0.260610-beta",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "resend": "^6.17.2",
