@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useWebHaptics } from "web-haptics/react";
+import { useTiks } from "../hooks/useTiks";
 
 interface Message {
   role: "user" | "coach";
@@ -12,6 +13,7 @@ const SYSTEM_PROMPT = `You are a motivational coach inside a habit-tracking app 
 
 export const CoachScreen: React.FC = () => {
   const { trigger } = useWebHaptics();
+  const { play } = useTiks();
   const [messages, setMessages] = useState<Message[]>([
     { role: "coach", text: OPENER },
   ]);
@@ -28,6 +30,7 @@ export const CoachScreen: React.FC = () => {
     if (!text || thinking) return;
 
     try { trigger("selection"); } catch {}
+    play("click");
 
     const userMsg: Message = { role: "user", text };
     const nextMessages = [...messages, userMsg];
@@ -52,6 +55,7 @@ export const CoachScreen: React.FC = () => {
       const data = await res.json();
 
       try { trigger("success"); } catch {}
+      play("notify");
       setMessages((prev) => [...prev, { role: "coach", text: data.reply }]);
     } catch {
       setMessages((prev) => [

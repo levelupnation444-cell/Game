@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useWebHaptics } from "web-haptics/react";
+import { useTiks } from "../hooks/useTiks";
 import { api } from "../api";
 import type { HealthData } from "../api";
 
 export const HealthScreen: React.FC = () => {
   const { trigger } = useWebHaptics();
+  const { play } = useTiks();
   const [data, setData] = useState<HealthData | null>(null);
   const [loading, setLoading] = useState(true);
   const [analyzing, setAnalyzing] = useState(false);
@@ -58,6 +60,7 @@ export const HealthScreen: React.FC = () => {
       const base64 = reader.result as string;
       try {
         await api.health.logFoodAI(base64);
+        play("success");
         try { trigger("success"); } catch {}
         await fetchHealth();
       } catch (err: any) {
@@ -83,6 +86,7 @@ export const HealthScreen: React.FC = () => {
         Number(manualCarbs) || 0,
         Number(manualFat) || 0
       );
+      play("pop");
       try { trigger("success"); } catch {}
       setManualName("");
       setManualCalories("");
@@ -99,6 +103,7 @@ export const HealthScreen: React.FC = () => {
   };
 
   const handleAddWater = async (amount: number) => {
+    if (amount > 0) { play("pop"); } else { play("warning"); }
     try { trigger("selection"); } catch {}
     const newWater = Math.max(0, currentWater + amount);
     setOptimisticWater(newWater);
@@ -125,6 +130,7 @@ export const HealthScreen: React.FC = () => {
 
   const handleSaveGoals = async (e: React.FormEvent) => {
     e.preventDefault();
+    play("swoosh");
     try { trigger("success"); } catch {}
     try {
       await api.health.updateGoals(Number(calGoalInput), Number(waterGoalInput));

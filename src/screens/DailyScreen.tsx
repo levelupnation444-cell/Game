@@ -6,6 +6,7 @@ import type { ProfileData } from "../api";
 import { StatBar } from "../components/StatBar";
 import { HabitRow } from "../components/HabitRow";
 import { ForumSection } from "../components/ForumSection";
+import { useTiks } from "../hooks/useTiks";
 
 interface DailyScreenProps {
   profile: ProfileData;
@@ -49,6 +50,7 @@ const LevelUpDialog: React.FC<{ dayNumber: number; onClose: () => void }> = ({ d
 
 export const DailyScreen: React.FC<DailyScreenProps> = ({ profile, onRefresh, onHelp, onProfile }) => {
   const { trigger } = useWebHaptics();
+  const { play } = useTiks();
   const [lootInput, setLootInput] = useState("");
   const [refText, setRefText] = useState(profile.reflection);
   const [savingRef, setSavingRef] = useState(false);
@@ -71,6 +73,7 @@ export const DailyScreen: React.FC<DailyScreenProps> = ({ profile, onRefresh, on
     if (allCompleted && !didShowDialog && !lootClaimedToday) {
       setShowLevelUp(true);
       setDidShowDialog(true);
+      play("notify");
       try { trigger("heavy"); } catch {}
       if (navigator.vibrate) navigator.vibrate([40, 60, 40]);
     }
@@ -104,6 +107,7 @@ export const DailyScreen: React.FC<DailyScreenProps> = ({ profile, onRefresh, on
 
     // Trigger both web-haptics AND direct navigator.vibrate fallback
     if (!isCompleted) {
+      play("success");
       try { trigger("success"); } catch {}
       if (navigator.vibrate) navigator.vibrate([15, 30, 25]);
 
@@ -114,6 +118,7 @@ export const DailyScreen: React.FC<DailyScreenProps> = ({ profile, onRefresh, on
         colors: ["#4c6ef5", "#58cc02", "#ffc800"],
       });
     } else {
+      play("toggle", false);
       try { trigger("selection"); } catch {}
       if (navigator.vibrate) navigator.vibrate(10);
     }
@@ -130,6 +135,7 @@ export const DailyScreen: React.FC<DailyScreenProps> = ({ profile, onRefresh, on
 
   const handleClaimLoot = async () => {
     if (!lootInput.trim()) return;
+    play("pop");
     try { trigger("heavy"); } catch {}
     if (navigator.vibrate) navigator.vibrate([30, 50, 30]);
 
@@ -145,6 +151,7 @@ export const DailyScreen: React.FC<DailyScreenProps> = ({ profile, onRefresh, on
   };
 
   const handleSaveReflection = async () => {
+    play("click");
     try { trigger("selection"); } catch {}
     if (navigator.vibrate) navigator.vibrate(12);
 

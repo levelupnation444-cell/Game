@@ -1,4 +1,5 @@
 import React from "react";
+import { useTiks } from "../hooks/useTiks";
 import type { Habit } from "../api";
 
 interface HabitRowProps {
@@ -8,9 +9,16 @@ interface HabitRowProps {
 }
 
 export const HabitRow: React.FC<HabitRowProps> = ({ habit, checked, onToggle }) => {
+  const { play } = useTiks();
+
+  const handleClick = () => {
+    play(checked ? "toggle" : "pop", !checked);
+    onToggle();
+  };
+
   return (
     <div
-      onClick={onToggle}
+      onClick={handleClick}
       className={`habit-row ${checked ? "checked" : ""}`}
     >
       {/* Emoji icon */}

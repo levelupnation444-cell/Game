@@ -1,5 +1,6 @@
 import React from "react";
 import { useWebHaptics } from "web-haptics/react";
+import { useTiks } from "../hooks/useTiks";
 
 interface BottomNavProps {
   currentTab: string;
@@ -8,10 +9,12 @@ interface BottomNavProps {
 
 export const BottomNav: React.FC<BottomNavProps> = ({ currentTab, setTab }) => {
   const { trigger } = useWebHaptics();
+  const { play } = useTiks();
 
   const handleTab = (tab: string) => {
     try { trigger("selection"); } catch {}
     if (navigator.vibrate) navigator.vibrate(10);
+    play("click");
     setTab(tab);
   };
 
