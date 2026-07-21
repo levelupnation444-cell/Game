@@ -4,7 +4,7 @@ import { getCookie, setCookie, deleteCookie } from "hono/cookie";
 import { cors } from "hono/cors";
 import { SignJWT, jwtVerify } from "jose";
 import { Resend } from "resend";
-import { db, migrate, nanoid } from "./db";
+import { db, migrate, nanoid } from "./db.js";
 
 /* ─── Init ─────────────────────────────────────────── */
 await migrate();
