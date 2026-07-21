@@ -1,5 +1,4 @@
 import { Hono } from "hono";
-import { serveStatic } from "hono/bun";
 import { getCookie, setCookie, deleteCookie } from "hono/cookie";
 import { cors } from "hono/cors";
 import { SignJWT, jwtVerify } from "jose";
@@ -423,10 +422,13 @@ app.get("/api/content", async (c) => {
 /* ─── Static files (client build) ──────────────────── */
 // In production Vercel environments, Vercel routes static files directly via rewrites.
 // Hono serves static files locally in dev.
-app.use("/assets/*", serveStatic({ root: "./client/dist" }));
-app.use("/favicon.ico", serveStatic({ root: "./client/dist" }));
-app.use("/manifest.json", serveStatic({ root: "./client/dist" }));
-app.get("*", serveStatic({ path: "./client/dist/index.html" }));
+if (typeof Bun !== "undefined") {
+  const { serveStatic } = await import("hono/bun");
+  app.use("/assets/*", serveStatic({ root: "./client/dist" }));
+  app.use("/favicon.ico", serveStatic({ root: "./client/dist" }));
+  app.use("/manifest.json", serveStatic({ root: "./client/dist" }));
+  app.get("*", serveStatic({ path: "./client/dist/index.html" }));
+}
 
 /* ─── Start ─────────────────────────────────────────── */
 if (typeof Bun !== "undefined") {
