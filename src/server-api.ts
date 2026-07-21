@@ -25,6 +25,15 @@ const JWT_SECRET = new TextEncoder().encode(
 );
 const APP_URL = process.env.APP_URL || "http://localhost:3000";
 
+function isAbsoluteHttpUrl(value: string) {
+  try {
+    const url = new URL(value);
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
 /* ─── CORS ──────────────────────────────────────────── */
 app.use("*", cors({ origin: APP_URL, credentials: true }));
 app.use("*", async (_c, next) => {
@@ -258,6 +267,10 @@ stripe.post("/checkout", async (c) => {
 
   if (!priceId) {
     return c.json({ error: `Missing Stripe price ID for ${plan} plan` }, 500);
+  }
+
+  if (!isAbsoluteHttpUrl(APP_URL)) {
+    return c.json({ error: "APP_URL must start with http:// or https://" }, 500);
   }
 
   const stripeClient = new Stripe(stripeSecretKey);
