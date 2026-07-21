@@ -14,6 +14,7 @@ const config = defineConfig({
     tanstackStart({
       server: {
         preset: process.env.VERCEL ? 'vercel' : 'node',
+        noExternal: true, // bundle all npm deps into server.js
       },
     }),
     viteReact(),

@@ -8,7 +8,7 @@
   "scripts": {
     "dev": "vite dev --port 3000",
     "generate-routes": "tsr generate",
-    "build": "vite build && echo '--- builds.json ---' && cat /vercel/output/builds.json || echo 'no builds.json' && echo '--- server.js head ---' && head -30 dist/server/server.js && echo '--- server.js tail ---' && tail -30 dist/server/server.js",
+    "build": "vite build && node build-vercel.mjs",
     "preview": "vite preview",
     "test": "vitest run"
   },
