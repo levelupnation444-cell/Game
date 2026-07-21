@@ -17,7 +17,7 @@ async function ensureMigrated() {
 
 const app = new Hono();
 const resend = new Resend(process.env.RESEND_API_KEY);
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || process.env.WEB_API_KEY || "" });
+const ai = new GoogleGenAI({ apiKey: process.env.AISDK_API_KEY || "" });
 
 const JWT_SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET || "dev-secret-change-in-production-32-chars-min"
@@ -253,7 +253,7 @@ profile.get("/", async (c) => {
     1,
     Math.round(
       (new Date(today + "T00:00:00").getTime() - new Date(startDate + "T00:00:00").getTime()) /
-        86400000
+      86400000
     ) + 1
   );
   const content = CONTENT[(dayNum - 1) % CONTENT.length];
