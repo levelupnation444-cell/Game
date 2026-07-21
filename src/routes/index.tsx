@@ -6,6 +6,7 @@ import { CreateScreen } from "../screens/CreateScreen";
 import { HowScreen } from "../screens/HowScreen";
 import { LevelIntroScreen } from "../screens/LevelIntroScreen";
 import { DailyScreen } from "../screens/DailyScreen";
+import { HealthScreen } from "../screens/HealthScreen";
 import { LeaderboardScreen } from "../screens/LeaderboardScreen";
 import { ProfileScreen } from "../screens/ProfileScreen";
 import { BottomNav } from "../components/BottomNav";
@@ -17,10 +18,10 @@ export const Route = createFileRoute("/")({
 });
 
 const AppContent: React.FC = () => {
-  const { user, loading: authLoading, logout, refreshUser } = useAuth();
+  const { user, loading: authLoading, refreshUser } = useAuth();
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [profileLoading, setProfileLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState("daily"); // daily, leaderboard, profile
+  const [activeTab, setActiveTab] = useState("daily"); // daily, health, leaderboard, profile
   const [overlayHow, setOverlayHow] = useState(false);
 
   const fetchProfile = async () => {
@@ -88,12 +89,13 @@ const AppContent: React.FC = () => {
           onHelp={() => setOverlayHow(true)}
         />
       )}
+      {activeTab === "health" && <HealthScreen />}
       {activeTab === "leaderboard" && <LeaderboardScreen />}
       {activeTab === "profile" && profile && (
         <ProfileScreen profile={profile} onRefresh={fetchProfile} />
       )}
 
-      <BottomNav currentTab={activeTab} setTab={setActiveTab} onLogout={logout} />
+      <BottomNav currentTab={activeTab} setTab={setActiveTab} />
     </div>
   );
 };

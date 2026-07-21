@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import type { ProfileData } from "../api";
 import { CreateScreen } from "./CreateScreen";
+import { useAuth } from "../hooks/useAuth";
 
 interface ProfileScreenProps {
   profile: ProfileData;
@@ -9,6 +10,7 @@ interface ProfileScreenProps {
 
 export const ProfileScreen: React.FC<ProfileScreenProps> = ({ profile, onRefresh }) => {
   const [editing, setEditing] = useState(false);
+  const { logout } = useAuth();
 
   if (editing) {
     return (
@@ -53,9 +55,14 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ profile, onRefresh
         <p style={{ fontSize: "14px", color: "var(--text-3)", textTransform: "capitalize", margin: "4px 0 16px", fontWeight: "600" }}>
           Level 1 {profile.user.class}
         </p>
-        <button className="btn ghost small" onClick={() => setEditing(true)}>
-          ✍️ Edit Profile
-        </button>
+        <div style={{ display: "flex", gap: "10px", justifyContent: "center" }}>
+          <button className="btn ghost small" onClick={() => setEditing(true)}>
+            ✍️ Edit Profile
+          </button>
+          <button className="btn danger small" onClick={logout}>
+            🚪 Logout
+          </button>
+        </div>
       </div>
 
       <div className="card" style={{ marginBottom: "24px", display: "flex", justifyContent: "space-around", textAlign: "center" }}>

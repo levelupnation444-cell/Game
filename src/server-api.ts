@@ -3,6 +3,7 @@ import { getCookie, setCookie, deleteCookie } from "hono/cookie";
 import { cors } from "hono/cors";
 import { SignJWT, jwtVerify } from "jose";
 import { Resend } from "resend";
+import { GoogleGenAI } from "@google/genai";
 import { db, migrate, nanoid } from "./db.ts";
 
 /* ─── Init ─────────────────────────────────────────── */
@@ -16,6 +17,8 @@ async function ensureMigrated() {
 
 const app = new Hono();
 const resend = new Resend(process.env.RESEND_API_KEY);
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || process.env.WEB_API_KEY || "" });
+
 const JWT_SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET || "dev-secret-change-in-production-32-chars-min"
 );
@@ -76,6 +79,8 @@ interface UserRow {
   start_date: string;
   seen_how: number;
   seen_level_intro: number;
+  calorie_goal?: number;
+  water_goal?: number;
   created_at: string;
 }
 
@@ -500,6 +505,152 @@ forum.post("/posts/:id/comments", async (c) => {
 });
 
 app.route("/api/forum", forum);
+
+/* ─── Health routes ──────────────────────────────────── */
+const health = new Hono<Env>();
+
+health.use("*", async (c, next) => {
+  const user = await getUser(c);
+  if (!user) return c.json({ error: "Unauthorized" }, 401);
+  c.set("user", user);
+  await next();
+});
+
+health.get("/", async (c) => {
+  const user = c.get("user");
+  const today = new Date().toISOString().slice(0, 10);
+
+  const foodRows = await db.execute({
+    sql: "SELECT * FROM food_logs WHERE user_id = ? AND date = ? ORDER BY created_at DESC",
+    args: [user.id, today],
+  });
+
+  const waterRows = await db.execute({
+    sql: "SELECT SUM(amount) as total FROM water_logs WHERE user_id = ? AND date = ?",
+    args: [user.id, today],
+  });
+
+  const foodLogs = foodRows.rows.map((r: any) => ({
+    id: r.id as string,
+    name: r.name as string,
+    calories: Number(r.calories) || 0,
+    protein: Number(r.protein) || 0,
+    carbs: Number(r.carbs) || 0,
+    fat: Number(r.fat) || 0,
+    createdAt: r.created_at as string,
+  }));
+
+  const totalCalories = foodLogs.reduce((acc, item) => acc + item.calories, 0);
+  const totalProtein = foodLogs.reduce((acc, item) => acc + item.protein, 0);
+  const totalCarbs = foodLogs.reduce((acc, item) => acc + item.carbs, 0);
+  const totalFat = foodLogs.reduce((acc, item) => acc + item.fat, 0);
+  const totalWater = Number(waterRows.rows[0]?.total) || 0;
+
+  return c.json({
+    calorieGoal: user.calorie_goal || 2000,
+    waterGoal: user.water_goal || 2500,
+    totalCalories,
+    totalWater,
+    totalProtein,
+    totalCarbs,
+    totalFat,
+    foodLogs,
+  });
+});
+
+health.post("/food/ai", async (c) => {
+  const user = c.get("user");
+  const { imageBase64 } = await c.req.json();
+
+  if (!imageBase64) {
+    return c.json({ error: "Image required" }, 400);
+  }
+
+  const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, "");
+
+  try {
+    const response = await ai.models.generateContent({
+      model: "gemini-3.1-flash-lite",
+      contents: [
+        {
+          inlineData: {
+            mimeType: "image/jpeg",
+            data: base64Data,
+          },
+        },
+        {
+          text: `Analyze this food image. Return STRICT JSON with keys: "name" (short dish name), "calories" (integer), "protein" (grams integer), "carbs" (grams integer), "fat" (grams integer). No markdown code blocks, just raw JSON.`,
+        },
+      ],
+    });
+
+    const rawText = response.text || "{}";
+    const cleanJson = rawText.replace(/```json/g, "").replace(/```/g, "").trim();
+    const parsed = JSON.parse(cleanJson);
+
+    const logId = nanoid();
+    const today = new Date().toISOString().slice(0, 10);
+    const name = parsed.name || "Meal";
+    const calories = Number(parsed.calories) || 350;
+    const protein = Number(parsed.protein) || 15;
+    const carbs = Number(parsed.carbs) || 40;
+    const fat = Number(parsed.fat) || 10;
+
+    await db.execute({
+      sql: `INSERT INTO food_logs (id, user_id, name, calories, protein, carbs, fat, date)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      args: [logId, user.id, name, calories, protein, carbs, fat, today],
+    });
+
+    return c.json({
+      log: {
+        id: logId,
+        name,
+        calories,
+        protein,
+        carbs,
+        fat,
+        createdAt: new Date().toISOString(),
+      },
+    });
+  } catch (e: any) {
+    console.error("AI Calorie Estimation error:", e);
+    return c.json({ error: e.message || "Failed to analyze image with AI" }, 500);
+  }
+});
+
+health.delete("/food/:id", async (c) => {
+  const user = c.get("user");
+  const id = c.req.param("id");
+  await db.execute({
+    sql: "DELETE FROM food_logs WHERE id = ? AND user_id = ?",
+    args: [id, user.id],
+  });
+  return c.json({ ok: true });
+});
+
+health.post("/water", async (c) => {
+  const user = c.get("user");
+  const { amount } = await c.req.json();
+  const today = new Date().toISOString().slice(0, 10);
+  await db.execute({
+    sql: "INSERT INTO water_logs (id, user_id, amount, date) VALUES (?, ?, ?, ?)",
+    args: [nanoid(), user.id, Number(amount) || 250, today],
+  });
+  return c.json({ ok: true });
+});
+
+health.post("/goals", async (c) => {
+  const user = c.get("user");
+  const { calorieGoal, waterGoal } = await c.req.json();
+  await db.execute({
+    sql: "UPDATE users SET calorie_goal = ?, water_goal = ? WHERE id = ?",
+    args: [Number(calorieGoal) || 2000, Number(waterGoal) || 2500, user.id],
+  });
+  return c.json({ ok: true });
+});
+
+app.route("/api/health", health);
 
 /* ─── Leaderboard ───────────────────────────────────── */
 app.get("/api/leaderboard", async (c) => {

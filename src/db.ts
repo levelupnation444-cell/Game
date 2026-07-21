@@ -15,6 +15,8 @@ export async function migrate() {
       start_date TEXT NOT NULL,
       seen_how INTEGER DEFAULT 0,
       seen_level_intro INTEGER DEFAULT 0,
+      calorie_goal INTEGER DEFAULT 2000,
+      water_goal INTEGER DEFAULT 2500,
       created_at TEXT DEFAULT (datetime('now'))
     );
 
@@ -90,8 +92,39 @@ export async function migrate() {
       FOREIGN KEY(post_id) REFERENCES forum_posts(id),
       FOREIGN KEY(user_id) REFERENCES users(id)
     );
+
+    CREATE TABLE IF NOT EXISTS food_logs (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      name TEXT NOT NULL,
+      calories INTEGER NOT NULL,
+      protein INTEGER DEFAULT 0,
+      carbs INTEGER DEFAULT 0,
+      fat INTEGER DEFAULT 0,
+      date TEXT NOT NULL,
+      created_at TEXT DEFAULT (datetime('now')),
+      FOREIGN KEY(user_id) REFERENCES users(id)
+    );
+
+    CREATE TABLE IF NOT EXISTS water_logs (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      amount INTEGER NOT NULL,
+      date TEXT NOT NULL,
+      created_at TEXT DEFAULT (datetime('now')),
+      FOREIGN KEY(user_id) REFERENCES users(id)
+    );
   `);
-  console.log("✅ DB migrated");
+
+  // Migrate columns for existing databases safely
+  try {
+    await db.execute("ALTER TABLE users ADD COLUMN calorie_goal INTEGER DEFAULT 2000");
+  } catch {}
+  try {
+    await db.execute("ALTER TABLE users ADD COLUMN water_goal INTEGER DEFAULT 2500");
+  } catch {}
+
+  console.log("✅ DB migrated with Health tables & goals");
 }
 
 export function nanoid(n = 21) {

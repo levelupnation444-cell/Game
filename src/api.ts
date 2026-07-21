@@ -6,6 +6,8 @@ export interface User {
   start_date: string;
   seen_how: number;
   seen_level_intro: number;
+  calorie_goal?: number;
+  water_goal?: number;
 }
 
 export interface Stats {
@@ -77,6 +79,27 @@ export interface ForumPost {
   comments?: ForumComment[];
 }
 
+export interface FoodLog {
+  id: string;
+  name: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  createdAt: string;
+}
+
+export interface HealthData {
+  calorieGoal: number;
+  waterGoal: number;
+  totalCalories: number;
+  totalWater: number;
+  totalProtein: number;
+  totalCarbs: number;
+  totalFat: number;
+  foodLogs: FoodLog[];
+}
+
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(path, {
     ...options,
@@ -119,5 +142,12 @@ export const api = {
     createPost: (title: string, content: string) => request<{ post: ForumPost }>("/api/forum/posts", { method: "POST", body: JSON.stringify({ title, content }) }),
     getPost: (id: string) => request<{ post: ForumPost; comments: ForumComment[] }>(`/api/forum/posts/${id}`),
     addComment: (postId: string, content: string) => request<{ comment: ForumComment }>(`/api/forum/posts/${postId}/comments`, { method: "POST", body: JSON.stringify({ content }) }),
+  },
+  health: {
+    get: () => request<HealthData>("/api/health"),
+    logFoodAI: (imageBase64: string) => request<{ log: FoodLog }>("/api/health/food/ai", { method: "POST", body: JSON.stringify({ imageBase64 }) }),
+    deleteFood: (id: string) => request<{ ok: boolean }>(`/api/health/food/${id}`, { method: "DELETE" }),
+    addWater: (amount: number) => request<{ ok: boolean }>("/api/health/water", { method: "POST", body: JSON.stringify({ amount }) }),
+    updateGoals: (calorieGoal: number, waterGoal: number) => request<{ ok: boolean }>("/api/health/goals", { method: "POST", body: JSON.stringify({ calorieGoal, waterGoal }) }),
   },
 };
