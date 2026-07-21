@@ -1,6 +1,7 @@
 {
   "name": "levelup",
   "private": true,
+  "type": "module",
   "scripts": {
     "start": "bun run server.ts",
     "build:client": "bun run --cwd client build",
