@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+<title>Level One — Purpose Path</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-1:#0d1117;
+    --bg-2:#12141c;
+    --card-1:#161b2e;
+    --card-2:#1a2035;
+    --blue:#3b5bdb;
+    --blue-soft:rgba(59,91,219,0.16);
+    --blue-line:rgba(59,91,219,0.45);
+    --gold:#e8a33d;
+    --head:#e8e8ec;
+    --body:#a8adba;
+    --radius:12px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;height:100%;}
+  body{
+    font-family:'Inter',system-ui,sans-serif;
+    background:linear-gradient(160deg,var(--bg-2),var(--bg-1) 60%);
+    color:var(--body);
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,.headline{font-family:'Poppins',sans-serif;color:var(--head);margin:0;}
+  #app{max-width:920px;margin:0 auto;padding:20px 16px 64px;}
+  .center-screen{min-height:calc(100vh - 40px);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:18px;}
+
+  .tag{
+    display:inline-flex;align-items:center;gap:6px;
+    border:1px solid var(--blue-line);
+    color:var(--blue);
+    background:var(--blue-soft);
+    border-radius:999px;
+    padding:4px 12px;
+    font-size:11px;
+    letter-spacing:0.08em;
+    font-weight:700;
+    text-transform:uppercase;
+  }
+  .tag.white{color:var(--head);border-color:rgba(232,232,236,0.35);background:rgba(232,232,236,0.06);}
+  .tag-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;}
+
+  .btn{
+    font-family:'Inter',sans-serif;
+    font-weight:700;
+    font-size:15px;
+    border-radius:10px;
+    border:none;
+    padding:14px 28px;
+    cursor:pointer;
+    background:var(--blue);
+    color:#fff;
+    transition:transform .15s ease, background .15s ease, opacity .15s ease;
+  }
+  .btn:hover{background:#3350c4;}
+  .btn:active{transform:scale(0.98);}
+  .btn:disabled{opacity:0.35;cursor:not-allowed;}
+  .btn.ghost{
+    background:transparent;
+    border:1px solid var(--blue-line);
+    color:var(--blue);
+  }
+  .btn.ghost:hover{background:var(--blue-soft);}
+  .btn.small{padding:9px 16px;font-size:13px;border-radius:8px;}
+  .btn.full{width:100%;}
+
+  .card{
+    background:var(--card-1);
+    border-radius:var(--radius);
+    padding:22px;
+    border:1px solid rgba(59,91,219,0.14);
+  }
+  .card.blue{background:linear-gradient(160deg,var(--card-2),var(--card-1));border-color:var(--blue-line);}
+
+  .quote{
+    border-left:3px solid var(--blue);
+    padding:4px 0 4px 16px;
+    margin:12px 0;
+  }
+  .quote p{color:var(--head);font-size:16px;line-height:1.55;margin:0 0 6px;font-style:italic;}
+  .quote span{color:var(--body);font-size:13px;}
+
+  .section-label{
+    display:flex;align-items:center;gap:8px;
+    color:var(--head);
+    font-weight:700;
+    font-size:13px;
+    letter-spacing:0.03em;
+    text-transform:uppercase;
+    margin-bottom:10px;
+  }
+  .section-label svg{width:16px;height:16px;stroke:var(--blue);}
+
+  input[type=text], textarea{
+    width:100%;
+    background:var(--bg-1);
+    border:1px solid rgba(168,173,186,0.25);
+    color:var(--head);
+    border-radius:8px;
+    padding:12px 14px;
+    font-family:'Inter',sans-serif;
+    font-size:15px;
+    resize:vertical;
+  }
+  input[type=text]:focus, textarea:focus{outline:2px solid var(--blue);border-color:var(--blue);}
+
+  .topbar{
+    display:flex;justify-content:space-between;align-items:center;
+    margin-bottom:18px;flex-wrap:wrap;gap:10px;
+  }
+  .player-chip{display:flex;align-items:center;gap:10px;}
+  .player-avatar{
+    width:38px;height:38px;border-radius:50%;
+    background:var(--blue-soft);border:1px solid var(--blue-line);
+    display:flex;align-items:center;justify-content:center;
+    color:var(--blue);font-weight:700;font-family:'Poppins',sans-serif;
+  }
+  .player-name{color:var(--head);font-weight:700;font-size:14px;}
+  .player-class{color:var(--body);font-size:12px;}
+  .streak-badge{
+    display:flex;align-items:center;gap:6px;
+    color:var(--gold);font-weight:700;font-size:13px;
+    background:rgba(232,163,61,0.1);
+    border:1px solid rgba(232,163,61,0.35);
+    border-radius:999px;padding:6px 12px;
+  }
+  .help-btn{
+    width:34px;height:34px;border-radius:50%;
+    border:1px solid rgba(168,173,186,0.3);
+    background:transparent;color:var(--body);
+    cursor:pointer;font-size:15px;font-weight:700;
+  }
+  .help-btn:hover{border-color:var(--blue);color:var(--blue);}
+
+  .stats-strip{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:20px;}
+  .stat-box{background:var(--card-1);border-radius:10px;padding:10px 12px;border:1px solid rgba(59,91,219,0.1);}
+  .stat-box .stat-name{font-size:10px;letter-spacing:0.06em;color:var(--body);text-transform:uppercase;margin-bottom:6px;}
+  .stat-box .stat-val{font-size:11px;color:var(--head);margin-bottom:5px;font-weight:600;}
+  .bar-track{height:6px;background:rgba(255,255,255,0.06);border-radius:99px;overflow:hidden;}
+  .bar-fill{height:100%;background:var(--blue);border-radius:99px;transition:width .5s ease;}
+
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start;}
+  .col{display:flex;flex-direction:column;gap:18px;}
+
+  .focus-word{
+    font-family:'Poppins',sans-serif;font-weight:800;font-size:26px;
+    color:var(--blue);letter-spacing:0.02em;margin:6px 0;
+  }
+  .focus-desc{color:var(--body);font-size:14px;line-height:1.5;}
+
+  .mission-text{color:var(--body);font-size:14px;line-height:1.6;}
+
+  .habit-list{display:flex;flex-direction:column;gap:10px;margin-top:6px;}
+  .habit-row{
+    display:flex;align-items:center;gap:12px;
+    background:rgba(0,0,0,0.15);
+    border-radius:9px;padding:11px 12px;
+    cursor:pointer;
+    border:1px solid transparent;
+    transition:border-color .15s ease, opacity .15s;
+  }
+  .habit-row:hover{border-color:var(--blue-line);}
+  .habit-row.checked{opacity:0.55;}
+  .habit-icon{
+    width:30px;height:30px;border-radius:8px;
+    background:var(--blue-soft);border:1px solid var(--blue-line);
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  }
+  .habit-icon svg{width:16px;height:16px;stroke:var(--blue);fill:none;stroke-width:1.7;}
+  .habit-label{flex:1;color:var(--head);font-size:14px;font-weight:600;}
+  .habit-check{
+    width:22px;height:22px;border-radius:6px;
+    border:2px solid var(--blue-line);
+    display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;color:#fff;font-size:13px;font-weight:800;
+  }
+  .habit-row.checked .habit-check{background:var(--blue);border-color:var(--blue);}
+
+  .progress-line{margin-top:14px;}
+  .progress-line .bar-track{height:8px;}
+  .progress-line .label{display:flex;justify-content:space-between;font-size:12px;color:var(--body);margin-bottom:6px;}
+
+  .loot-card{margin-top:0;}
+  .loot-head{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+  .loot-head svg{width:22px;height:22px;stroke:var(--gold);fill:none;stroke-width:1.6;}
+  .loot-title{color:var(--head);font-weight:700;font-size:15px;}
+  .loot-sub{color:var(--body);font-size:13px;margin-bottom:12px;}
+  .loot-claimed{color:var(--gold);font-weight:700;font-size:14px;display:flex;align-items:center;gap:8px;}
+
+  .respawn-banner{
+    background:rgba(232,163,61,0.08);
+    border:1px solid rgba(232,163,61,0.3);
+    border-radius:10px;padding:14px 16px;margin-bottom:18px;
+    display:flex;justify-content:space-between;align-items:center;gap:12px;
+    color:var(--head);font-size:14px;
+  }
+  .respawn-banner button{background:none;border:none;color:var(--gold);font-weight:700;cursor:pointer;font-size:13px;flex-shrink:0;}
+
+  .class-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%;max-width:520px;}
+  .class-card{
+    background:var(--card-1);border:1.5px solid rgba(59,91,219,0.18);
+    border-radius:var(--radius);padding:16px;cursor:pointer;text-align:left;
+    transition:border-color .15s ease, background .15s ease;
+  }
+  .class-card:hover{border-color:var(--blue-line);}
+  .class-card.selected{border-color:var(--blue);background:linear-gradient(160deg,var(--card-2),var(--card-1));}
+  .class-card h3{font-size:15px;margin-bottom:4px;}
+  .class-card p{font-size:12.5px;color:var(--body);margin:0;line-height:1.4;}
+
+  .info-cards{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin:20px 0;}
+  .info-card{background:var(--card-1);border-radius:var(--radius);padding:18px;border:1px solid rgba(59,91,219,0.14);}
+  .info-card h3{font-size:14px;color:var(--blue);margin-bottom:8px;}
+  .info-card p{font-size:13px;color:var(--body);line-height:1.5;margin:0;}
+
+  .subtitle{color:var(--body);font-size:15px;}
+  .body-copy p{font-size:14.5px;line-height:1.7;color:var(--body);margin:0 0 14px;text-align:left;}
+  .gold{color:var(--gold);font-weight:700;}
+
+  .form-block{width:100%;max-width:420px;display:flex;flex-direction:column;gap:14px;text-align:left;}
+  .form-label{font-size:12px;color:var(--body);text-transform:uppercase;letter-spacing:0.06em;font-weight:700;}
+
+  @media (max-width:760px){
+    .grid-2{grid-template-columns:1fr;}
+    .info-cards{grid-template-columns:1fr;}
+    .class-grid{grid-template-columns:1fr;}
+    .stats-strip{grid-template-columns:repeat(5,1fr);gap:6px;}
+    .stat-box{padding:8px 6px;}
+    .stat-box .stat-name{font-size:8.5px;}
+  }
+  ::selection{background:var(--blue);color:#fff;}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+/* ---------------- Content database ---------------- */
+const CONTENT = [
+  { verse:"Wake up, sleeper, rise from the dead, and Christ will shine on you.", ref:"Ephesians 5:14",
+    focusWord:"AWAKE", focusDesc:"Stay present. Stay aware. God is speaking — are you listening?",
+    mission:"Before you check your phone this morning, sit in silence for two minutes and just notice you're alive. Say thank you." },
+  { verse:"Let the morning bring me word of your unfailing love, for I have put my trust in you.", ref:"Psalm 143:8",
+    focusWord:"TRUST", focusDesc:"You don't need the whole plan. You just need to take the next step with Him.",
+    mission:"Write down one thing you're anxious about, then hand it to God in a single honest sentence." },
+  { verse:"His mercies are new every morning; great is your faithfulness.", ref:"Lamentations 3:22-23",
+    focusWord:"MERCY", focusDesc:"Yesterday doesn't get a vote today. You get a clean page.",
+    mission:"Forgive yourself for one thing you've been quietly carrying from yesterday." },
+  { verse:"In the morning, Lord, you hear my voice; in the morning I lay my requests before you and wait expectantly.", ref:"Psalm 5:3",
+    focusWord:"EXPECTANT", focusDesc:"Ask like you believe He's actually listening. Because He is.",
+    mission:"Pray one specific request out loud before you do anything else today." },
+  { verse:"Those who hope in the Lord will renew their strength.", ref:"Isaiah 40:31",
+    focusWord:"STRENGTH", focusDesc:"You're not running on your own supply. His doesn't run out.",
+    mission:"Do the one hard thing you've been avoiding. Just start it — you don't have to finish it today." },
+  { verse:"Seek first his kingdom and his righteousness, and all these things will be given to you as well.", ref:"Matthew 6:33",
+    focusWord:"PRIORITY", focusDesc:"What gets your first attention shapes everything after it.",
+    mission:"Before you open any app this morning, open your Bible. Even for one verse." },
+  { verse:"Do not conform to the pattern of this world, but be transformed by the renewing of your mind.", ref:"Romans 12:2",
+    focusWord:"RENEWED", focusDesc:"Your mind is a battlefield worth showing up for.",
+    mission:"Notice one thought pattern today that isn't from God, and replace it with something true." },
+  { verse:"This is the day the Lord has made; let us rejoice and be glad in it.", ref:"Psalm 118:24",
+    focusWord:"PRESENT", focusDesc:"Not yesterday. Not five years from now. Today is the assignment.",
+    mission:"Name three good things about today before it's even 9am." },
+  { verse:"The Sovereign Lord is my strength; he makes my feet like the feet of a deer.", ref:"Habakkuk 3:19",
+    focusWord:"STEADY", focusDesc:"You don't need to sprint. You need to keep your footing.",
+    mission:"Take one real step toward your goal today, even if it's a small one." },
+  { verse:"For I know the plans I have for you, declares the Lord, plans to prosper you and not to harm you.", ref:"Jeremiah 29:11",
+    focusWord:"PURPOSE", focusDesc:"You're not an accident. This season has a reason.",
+    mission:"Write down one way you think God might be using this season of your life." }
+];
+
+const HABITS = [
+  { id:"bible", label:"Read the Bible", stat:"discipline", icon:iconBook() },
+  { id:"pray", label:"Pray", stat:"faith", icon:iconPray() },
+  { id:"water", label:"Drink Water", stat:"energy", icon:iconDrop() },
+  { id:"phone", label:"No Phone Before God", stat:"focus", icon:iconPhone() },
+  { id:"encourage", label:"Encourage Someone", stat:"purpose", icon:iconHeart() }
+];
+
+const CLASSES = [
+  { id:"warrior", name:"Warrior", line:"You push through when it's hard." },
+  { id:"disciple", name:"Disciple", line:"You learn it, then you live it." },
+  { id:"builder", name:"Builder", line:"You show up and stack the bricks." },
+  { id:"seeker", name:"Seeker", line:"You're still figuring it out — that's fine." }
+];
+
+/* ---------------- Icons ---------------- */
+function iconBook(){return '<svg viewBox="0 0 24 24"><path d="M4 5c2-1 5-1 7 0v14c-2-1-5-1-7 0V5z" stroke="currentColor"/><path d="M20 5c-2-1-5-1-7 0v14c2-1 5-1 7 0V5z" stroke="currentColor"/></svg>';}
+function iconPray(){return '<svg viewBox="0 0 24 24"><path d="M8 5c0 4-2 6-4 8 2 3 5 4 8 4" stroke="currentColor"/><path d="M16 5c0 4 2 6 4 8-2 3-5 4-8 4" stroke="currentColor"/><line x1="12" y1="3" x2="12" y2="17" stroke="currentColor"/></svg>';}
+function iconDrop(){return '<svg viewBox="0 0 24 24"><path d="M12 2c4 5 7 9 7 13a7 7 0 0 1-14 0c0-4 3-8 7-13z" stroke="currentColor"/></svg>';}
+function iconPhone(){return '<svg viewBox="0 0 24 24"><rect x="7" y="2" width="10" height="20" rx="2" stroke="currentColor"/><line x1="2" y1="2" x2="22" y2="22" stroke="currentColor"/></svg>';}
+function iconHeart(){return '<svg viewBox="0 0 24 24"><path d="M12 21s-7-4.35-9.5-8.5C1 9 2.5 5 6 5c2 0 3.5 1.5 4 3 .5-1.5 2-3 4-3 3.5 0 5 4 3.5 7.5C19 16.65 12 21 12 21z" stroke="currentColor"/></svg>';}
+function iconGift(){return '<svg viewBox="0 0 24 24"><rect x="3" y="9" width="18" height="12" rx="1" stroke="currentColor"/><line x1="3" y1="13" x2="21" y2="13" stroke="currentColor"/><path d="M12 9v12M12 9c-1-3-4-4-5-2s1 2 5 2zM12 9c1-3 4-4 5-2s-1 2-5 2z" stroke="currentColor"/></svg>';}
+function iconTarget(){return '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" stroke="currentColor"/><circle cx="12" cy="12" r="5" stroke="currentColor"/><circle cx="12" cy="12" r="1" stroke="currentColor" fill="currentColor"/></svg>';}
+function iconMoon(){return '<svg viewBox="0 0 24 24"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5z" stroke="currentColor"/></svg>';}
+
+/* ---------------- State ---------------- */
+const STORAGE_KEY = "levelone_profile";
+let state = null;
+let respawnMessage = null;
+let howOverlay = false;
+let loading = true;
+
+function todayStr(){ return new Date().toISOString().slice(0,10); }
+function daysBetween(a,b){
+  const d1 = new Date(a+"T00:00:00");
+  const d2 = new Date(b+"T00:00:00");
+  return Math.round((d2-d1)/86400000);
+}
+
+function defaultState(){
+  const t = todayStr();
+  const habitsToday = {};
+  HABITS.forEach(h=>habitsToday[h.id]=false);
+  return {
+    name:"", cls:"",
+    stats:{faith:0,discipline:0,focus:0,energy:0,purpose:0},
+    startDate:t,
+    lastVisitDate:t,
+    lastCompletedDate:null,
+    streak:0,
+    completedDays:[],
+    lootLog:[],
+    habitsToday,
+    todayLootClaimed:false,
+    todayLootText:"",
+    reflections:{},
+    seenHow:false,
+    seenLevelIntro:false
+  };
+}
+
+async function loadState(){
+  try{
+    const res = await window.storage.get(STORAGE_KEY, false);
+    if(res && res.value){
+      state = JSON.parse(res.value);
+    } else {
+      state = null;
+    }
+  }catch(e){
+    state = null;
+  }
+  loading = false;
+}
+
+async function saveState(){
+  try{
+    await window.storage.set(STORAGE_KEY, JSON.stringify(state), false);
+  }catch(e){
+    console.error("save failed", e);
+  }
+}
+
+function rollForNewDay(){
+  if(!state) return;
+  const t = todayStr();
+  if(state.lastVisitDate !== t){
+    // check if a day (or more) was missed without completion
+    const gap = daysBetween(state.lastVisitDate, t);
+    const wasYesterdayComplete = state.lastCompletedDate === state.lastVisitDate;
+    if(gap > 1 || (gap === 1 && !wasYesterdayComplete)){
+      if(state.streak > 0){
+        respawnMessage = "Welcome back. No shame — the game waited for you. Let's keep moving.";
+      }
+      state.streak = 0;
+    }
+    const habitsToday = {};
+    HABITS.forEach(h=>habitsToday[h.id]=false);
+    state.habitsToday = habitsToday;
+    state.todayLootClaimed = false;
+    state.todayLootText = "";
+    state.lastVisitDate = t;
+  }
+}
+
+function dayNumber(){
+  return daysBetween(state.startDate, todayStr()) + 1;
+}
+function contentForToday(){
+  const n = dayNumber();
+  return CONTENT[(n-1) % CONTENT.length];
+}
+
+/* ---------------- Render root ---------------- */
+const app = document.getElementById("app");
+
+function currentScreen(){
+  if(!state) return "title";
+  if(!state.name || !state.cls) return "create";
+  if(!state.seenHow) return "how";
+  if(!state.seenLevelIntro) return "levelIntro";
+  return "daily";
+}
+
+function render(){
+  if(loading){ app.innerHTML = ""; return; }
+  const screen = howOverlay ? "how" : currentScreen();
+  if(screen === "title") return renderTitle();
+  if(screen === "create") return renderCreate();
+  if(screen === "how") return renderHow();
+  if(screen === "levelIntro") return renderLevelIntro();
+  return renderDaily();
+}
+
+/* ---------------- Screens ---------------- */
+function renderTitle(){
+  app.innerHTML = `
+  <div class="center-screen">
+    <div class="tag-row">
+      <span class="tag">Purpose Path</span>
+      <span class="tag">Level 1: Wake Up</span>
+    </div>
+    <h1 class="headline" style="font-size:44px;">Level One</h1>
+    <p class="subtitle">Level Up Nation</p>
+    <button class="btn" style="margin-top:14px;" onclick="startFlow()">Begin</button>
+  </div>`;
+}
+
+function startFlow(){
+  state = defaultState();
+  saveState();
+  render();
+}
+
+function renderCreate(){
+  const name = state ? state.name : "";
+  const cls = state ? state.cls : "";
+  app.innerHTML = `
+  <div class="center-screen">
+    <span class="tag">Character Creation</span>
+    <h1 class="headline" style="font-size:28px;">Who are you showing up as?</h1>
+    <div class="form-block">
+      <div>
+        <div class="form-label">Player Name</div>
+        <input type="text" id="nameInput" value="${escapeHtml(name)}" placeholder="Enter your name" maxlength="24" />
+      </div>
+      <div>
+        <div class="form-label" style="margin-bottom:10px;">Choose Your Class</div>
+        <div class="class-grid" id="classGrid">
+          ${CLASSES.map(c=>`
+            <div class="class-card ${cls===c.id?'selected':''}" data-cls="${c.id}" onclick="selectClass('${c.id}')">
+              <h3>${c.name}</h3>
+              <p>${c.line}</p>
+            </div>`).join("")}
+        </div>
+      </div>
+      <button class="btn full" id="continueBtn" onclick="submitCreate()">Continue</button>
+    </div>
+  </div>`;
+  document.getElementById("nameInput").addEventListener("input", e=>{
+    state.name = e.target.value;
+  });
+}
+
+function selectClass(id){
+  state.cls = id;
+  render();
+}
+
+function submitCreate(){
+  const nameVal = document.getElementById("nameInput").value.trim();
+  if(!nameVal || !state.cls){
+    alert("Enter your name and pick a class to continue.");
+    return;
+  }
+  state.name = nameVal;
+  saveState();
+  render();
+}
+
+function renderHow(){
+  app.innerHTML = `
+  <div style="max-width:760px;margin:40px auto;">
+    <div style="text-align:center;margin-bottom:22px;">
+      <span class="tag">Help</span>
+      <h1 class="headline" style="font-size:30px;margin-top:10px;">How This Works</h1>
+    </div>
+    <div class="body-copy" style="text-align:center;max-width:600px;margin:0 auto 8px;">
+      <p>This workbook is your game. Your life is the level. Every day is a chance to move forward — and the rules are simple. No complicated systems. No judgment. Just you, your purpose, and the grace of God meeting you right where you are.</p>
+    </div>
+    <div class="info-cards">
+      <div class="info-card"><h3>Save Points</h3><p>Each day is a Save Point — a moment to pause, reflect, and lock in your progress. Complete it and you move forward.</p></div>
+      <div class="info-card"><h3>Earn Loot</h3><p>Finishing a Save Point earns you Loot — small, meaningful rewards you give yourself for showing up and doing the work.</p></div>
+      <div class="info-card"><h3>Respawn Anytime</h3><p>Miss a day? No shame. You can always Respawn. The game doesn't end — it just waits for you to come back.</p></div>
+    </div>
+    <div class="quote" style="max-width:560px;margin:22px auto;">
+      <p>Do not conform to the pattern of this world, but be transformed by the renewing of your mind.</p>
+      <span>Romans 12:2</span>
+    </div>
+    <div style="text-align:center;margin-top:20px;">
+      <button class="btn" onclick="dismissHow()">${howOverlay ? "Back" : "Continue"}</button>
+    </div>
+  </div>`;
+}
+
+function dismissHow(){
+  if(howOverlay){
+    howOverlay = false;
+  } else {
+    state.seenHow = true;
+    saveState();
+  }
+  render();
+}
+
+function renderLevelIntro(){
+  app.innerHTML = `
+  <div style="max-width:640px;margin:40px auto;">
+    <div style="text-align:center;margin-bottom:16px;">
+      <span class="tag">Level 1</span>
+      <h1 class="headline" style="font-size:34px;margin-top:12px;">Wake Up</h1>
+    </div>
+    <div class="quote">
+      <p>Wake up, sleeper, rise from the dead, and Christ will shine on you.</p>
+      <span>Ephesians 5:14</span>
+    </div>
+    <div class="body-copy" style="margin-top:16px;">
+      <p>There is a version of you that God has been waiting for — not a perfect version, but an awake one. Someone who has stopped sleepwalking through their own life and started moving with intention, with purpose, with faith.</p>
+      <p>Level 1 isn't about having it all figured out. It's about opening your eyes. It's about deciding that today, you will be present — to God, to your mission, and to the person you are becoming. The world is full of noise. This level is about learning to hear the voice that matters most.</p>
+      <p>You are not behind. You are not too far gone. You are exactly where you need to be to begin. <span class="gold">Welcome to Level 1.</span></p>
+    </div>
+    <div style="text-align:center;margin-top:20px;">
+      <button class="btn" onclick="enterDaily()">Enter Level 1</button>
+    </div>
+  </div>`;
+}
+
+function enterDaily(){
+  state.seenLevelIntro = true;
+  saveState();
+  render();
+}
+
+function renderDaily(){
+  rollForNewDay();
+  saveState();
+  const day = dayNumber();
+  const c = contentForToday();
+  const allChecked = HABITS.every(h=>state.habitsToday[h.id]);
+  const initials = (state.name||"?").trim().slice(0,1).toUpperCase();
+  const clsObj = CLASSES.find(x=>x.id===state.cls) || {name:""};
+
+  app.innerHTML = `
+    <div class="topbar">
+      <div class="player-chip">
+        <div class="player-avatar">${initials}</div>
+        <div>
+          <div class="player-name">${escapeHtml(state.name)}</div>
+          <div class="player-class">${clsObj.name}</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div class="streak-badge">🔥 ${state.streak} day streak</div>
+        <button class="help-btn" onclick="openHow()" title="How this works">?</button>
+      </div>
+    </div>
+
+    ${respawnMessage ? `
+    <div class="respawn-banner">
+      <span>${respawnMessage}</span>
+      <button onclick="dismissRespawn()">Got it</button>
+    </div>` : ""}
+
+    <div class="stats-strip">
+      ${statBar("Faith", state.stats.faith)}
+      ${statBar("Discipline", state.stats.discipline)}
+      ${statBar("Focus", state.stats.focus)}
+      ${statBar("Energy", state.stats.energy)}
+      ${statBar("Purpose", state.stats.purpose)}
+    </div>
+
+    <div class="tag-row" style="justify-content:flex-start;margin-bottom:12px;">
+      <span class="tag">Save Point ${String(day).padStart(2,"0")}</span>
+      <span class="tag white">Day ${day}</span>
+    </div>
+    <h1 class="headline" style="font-size:26px;margin-bottom:18px;">Today's Save Point</h1>
+
+    <div class="grid-2">
+      <div class="col">
+        <div class="card">
+          <div class="section-label">${iconBook()} Today's Bible Verse</div>
+          <div class="quote">
+            <p>${c.verse}</p>
+            <span>${c.ref}</span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="section-label">Today's Focus Word</div>
+          <div class="focus-word">${c.focusWord}</div>
+          <div class="focus-desc">${c.focusDesc}</div>
+        </div>
+        <div class="card">
+          <div class="section-label">${iconTarget()} Daily Mission</div>
+          <div class="mission-text">${c.mission}</div>
+        </div>
+        <div class="card">
+          <div class="section-label">${iconMoon()} Evening Reflection</div>
+          <div class="form-label" style="margin-bottom:8px;">One Win Today:</div>
+          <textarea rows="3" id="reflectionInput" placeholder="Write one thing that went right today...">${escapeHtml(state.reflections[todayStr()]||"")}</textarea>
+        </div>
+      </div>
+
+      <div class="col">
+        <div class="card blue">
+          <div class="section-label" style="margin-bottom:4px;">Habit Checklist</div>
+          <div class="habit-list">
+            ${HABITS.map(h=>`
+              <div class="habit-row ${state.habitsToday[h.id]?'checked':''}" onclick="toggleHabit('${h.id}')">
+                <div class="habit-icon">${h.icon}</div>
+                <div class="habit-label">${h.label}</div>
+                <div class="habit-check">${state.habitsToday[h.id]?"✓":""}</div>
+              </div>`).join("")}
+          </div>
+          <div class="progress-line">
+            <div class="label"><span>Today's progress</span><span>${HABITS.filter(h=>state.habitsToday[h.id]).length}/${HABITS.length}</span></div>
+            <div class="bar-track"><div class="bar-fill" style="width:${(HABITS.filter(h=>state.habitsToday[h.id]).length/HABITS.length*100)}%"></div></div>
+          </div>
+        </div>
+
+        ${allChecked ? `
+        <div class="card blue loot-card">
+          <div class="loot-head">${iconGift()}<span class="loot-title">Loot Drop</span></div>
+          ${state.todayLootClaimed ? `
+            <div class="loot-claimed">✓ Save Complete — Loot claimed for today.</div>
+          ` : `
+            <div class="loot-sub">You completed Save Point ${String(day).padStart(2,"0")}. Claim your reward.</div>
+            <div class="form-label" style="margin-bottom:8px;">My Loot Today</div>
+            <input type="text" id="lootInput" placeholder="e.g. Favorite coffee, an early night..." value="${escapeHtml(state.todayLootText)}" style="margin-bottom:12px;" />
+            <button class="btn full" onclick="claimLoot()">✓ Save Complete</button>
+          `}
+        </div>` : ""}
+      </div>
+    </div>
+  `;
+
+  const reflectionEl = document.getElementById("reflectionInput");
+  if(reflectionEl){
+    reflectionEl.addEventListener("change", e=>{
+      state.reflections[todayStr()] = e.target.value;
+      saveState();
+    });
+  }
+  const lootEl = document.getElementById("lootInput");
+  if(lootEl){
+    lootEl.addEventListener("input", e=>{
+      state.todayLootText = e.target.value;
+    });
+  }
+}
+
+function statBar(label, val){
+  return `<div class="stat-box">
+    <div class="stat-name">${label}</div>
+    <div class="stat-val">${val}/100</div>
+    <div class="bar-track"><div class="bar-fill" style="width:${val}%"></div></div>
+  </div>`;
+}
+
+function openHow(){
+  howOverlay = true;
+  render();
+}
+
+function dismissRespawn(){
+  respawnMessage = null;
+  render();
+}
+
+function toggleHabit(id){
+  const habit = HABITS.find(h=>h.id===id);
+  const nowChecked = !state.habitsToday[id];
+  state.habitsToday[id] = nowChecked;
+  const delta = nowChecked ? 5 : -5;
+  state.stats[habit.stat] = Math.max(0, Math.min(100, state.stats[habit.stat] + delta));
+
+  const allChecked = HABITS.every(h=>state.habitsToday[h.id]);
+  const t = todayStr();
+  if(allChecked){
+    if(state.lastCompletedDate !== t){
+      const wasYesterday = state.lastCompletedDate && daysBetween(state.lastCompletedDate, t) === 1;
+      state.streak = wasYesterday || state.lastCompletedDate === null ? state.streak + 1 : 1;
+      state.lastCompletedDate = t;
+      if(!state.completedDays.includes(dayNumber())) state.completedDays.push(dayNumber());
+    }
+  } else {
+    // unchecking after being complete: back off today's completion credit
+    if(state.lastCompletedDate === t){
+      state.lastCompletedDate = null;
+      state.streak = Math.max(0, state.streak - 1);
+    }
+  }
+
+  saveState();
+  render();
+}
+
+function claimLoot(){
+  const day = dayNumber();
+  state.todayLootClaimed = true;
+  state.lootLog.push({ day, text: state.todayLootText || "(no note)", date: todayStr() });
+  saveState();
+  render();
+}
+
+function escapeHtml(str){
+  const div = document.createElement("div");
+  div.textContent = str || "";
+  return div.innerHTML;
+}
+
+/* ---------------- Init ---------------- */
+(async function init(){
+  await loadState();
+  render();
+})();
+</script>
+</body>
+</html>

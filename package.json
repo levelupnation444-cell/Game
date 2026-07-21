@@ -1,0 +1,21 @@
+{
+  "name": "levelup",
+  "private": true,
+  "scripts": {
+    "start": "bun run server.ts",
+    "build:client": "bun run --cwd client build",
+    "dev:client": "bun run --cwd client dev"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@libsql/client": "^0.17.4",
+    "hono": "^4.12.31",
+    "jose": "^6.2.3",
+    "resend": "^6.17.2"
+  }
+}
