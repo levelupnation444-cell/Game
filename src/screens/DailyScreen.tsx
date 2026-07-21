@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import confetti from "canvas-confetti";
+import { useWebHaptics } from "web-haptics/react";
 import { api } from "../api";
 import type { ProfileData } from "../api";
 import { StatBar } from "../components/StatBar";
@@ -12,24 +13,33 @@ interface DailyScreenProps {
   onHelp: () => void;
 }
 
-const LevelUpDialog: React.FC<{ dayNumber: number; onClose: () => void }> = ({ dayNumber, onClose }) => (
-  <div className="dialog-overlay" onClick={onClose}>
-    <div className="dialog-box" onClick={(e) => e.stopPropagation()}>
-      <div style={{ fontSize: "56px", marginBottom: "12px", lineHeight: 1 }}>🏆</div>
-      <h2 className="headline" style={{ fontSize: "20px", marginBottom: "12px" }}>
-        Save Point {String(dayNumber).padStart(2, "0")} Complete!
-      </h2>
-      <p style={{ color: "var(--text-2)", fontSize: "16px", lineHeight: 1.6, marginBottom: "24px" }}>
-        All habits done. Streak extended. You're building something real — keep showing up.
-      </p>
-      <button className="btn green full" onClick={onClose}>
-        Continue
-      </button>
+const LevelUpDialog: React.FC<{ dayNumber: number; onClose: () => void }> = ({ dayNumber, onClose }) => {
+  const { trigger } = useWebHaptics();
+
+  useEffect(() => {
+    trigger("heavy");
+  }, []);
+
+  return (
+    <div className="dialog-overlay" onClick={onClose}>
+      <div className="dialog-box" onClick={(e) => e.stopPropagation()}>
+        <div style={{ fontSize: "56px", marginBottom: "12px", lineHeight: 1 }}>🏆</div>
+        <h2 className="headline" style={{ fontSize: "20px", marginBottom: "12px" }}>
+          Save Point {String(dayNumber).padStart(2, "0")} Complete!
+        </h2>
+        <p style={{ color: "var(--text-2)", fontSize: "16px", lineHeight: 1.6, marginBottom: "24px" }}>
+          All habits done. Streak extended. You're building something real — keep showing up.
+        </p>
+        <button className="btn green full" onClick={() => { trigger("selection"); onClose(); }}>
+          Continue
+        </button>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 export const DailyScreen: React.FC<DailyScreenProps> = ({ profile, onRefresh, onHelp }) => {
+  const { trigger } = useWebHaptics();
   const [lootInput, setLootInput] = useState("");
   const [refText, setRefText] = useState(profile.reflection);
   const [savingRef, setSavingRef] = useState(false);
@@ -82,13 +92,15 @@ export const DailyScreen: React.FC<DailyScreenProps> = ({ profile, onRefresh, on
     setOptimisticStats(nextStats);
 
     if (!isCompleted) {
+      trigger("success");
       confetti({
         particleCount: 80,
         spread: 60,
         origin: { y: 0.8 },
         colors: ["#4c6ef5", "#58cc02", "#ffc800"],
       });
-      if (navigator.vibrate) navigator.vibrate(10);
+    } else {
+      trigger("selection");
     }
 
     try {
@@ -103,6 +115,7 @@ export const DailyScreen: React.FC<DailyScreenProps> = ({ profile, onRefresh, on
 
   const handleClaimLoot = async () => {
     if (!lootInput.trim()) return;
+    trigger("heavy");
     setOptimisticLootClaimed(true);
     try {
       await api.game.claimLoot(dayNumber, lootInput.trim());
@@ -115,6 +128,7 @@ export const DailyScreen: React.FC<DailyScreenProps> = ({ profile, onRefresh, on
   };
 
   const handleSaveReflection = async () => {
+    trigger("selection");
     setSavingRef(true);
     try {
       await api.game.saveReflection(refText);
@@ -174,7 +188,7 @@ export const DailyScreen: React.FC<DailyScreenProps> = ({ profile, onRefresh, on
               🔥 {activeStats.streak} day streak
             </div>
             <button
-              onClick={onHelp}
+              onClick={() => { trigger("selection"); onHelp(); }}
               style={{
                 width: "34px",
                 height: "34px",
