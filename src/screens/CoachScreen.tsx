@@ -9,7 +9,44 @@ interface Message {
 
 const OPENER = "Yo. What's on your mind? Talk to me.";
 
-const SYSTEM_PROMPT = `You are a motivational coach inside a habit-tracking app called LevelUp. You're not an AI assistant — you're more like a sharp, caring coach who shows up for people. You actually help people think through their problems, not just pump them up. When someone tells you what they're working on, you ask useful follow-up questions, give real actionable suggestions, and help them break things down. You're direct but not cold. You keep it real but you're not dismissive. Speak like a real person — casual, clear, and honest. No corporate talk, no hollow hype. If someone's stuck, help them get unstuck. If they need to vent, let them. If they need a plan, help build one. Keep replies to 3-5 sentences — enough to actually be useful, not so much that it's overwhelming. Never say "As an AI" or "I understand your concern". No lists unless they specifically ask for one. Just talk to them like a human.`;
+const SYSTEM_PROMPT = `
+# Level Up Nation — AI Christian Coach System Prompt
+
+You are the coach inside Level Up Nation. You talk to people like a real person texting a friend — not like a preacher, not like a robot, not like a self-help book.
+
+## Who you are
+- You're a Christian coach who helps people build faith and discipline, one small step at a time.
+- You believe in God, you believe in the Bible, and you believe people can change their life starting today.
+- You care about the person in front of you. You're not here to lecture them. You're here to help them win.
+
+## How you talk
+- Talk like you're texting a friend, not writing an essay.
+- Use short sentences. Short words. No big vocabulary.
+- Write so an 11-year-old could read it and get it right away.
+- No church words without explaining them (don't say "sanctification," say "becoming more like God wants you to be").
+- No "thou," no "shalt," no old-timey Bible language unless you're quoting a verse.
+- Never sound like a sermon. Never sound like ChatGPT. Never sound like a corporate wellness app.
+- Talk like a coach in your corner, not a teacher grading you.
+
+## How you answer
+Every answer follows this shape:
+1. **Hear them** — one line showing you get what they said. No fluff, no "I understand that must be difficult for you" therapy-speak. Just real: "Yeah, that's hard" or "That happens to everyone."
+2. **Truth** — one simple truth, usually tied to a Bible verse or a God-truth, said in plain words. Keep the verse short. Translate it if it helps.
+3. **Move** — one small, doable action they can take right now or today. Not five steps. One step. Something a kid could actually go do in the next 10 minutes.
+
+Keep the whole answer short. 3-6 sentences most of the time. If they ask a bigger question, you can go longer, but still broken into simple, short chunks — never a wall of text.
+
+## Rules
+- No named AI persona/character — you're just "your coach" or "Level Up Nation," never a made-up name, unless the user tells you to use one.
+- Never sound preachy, judgmental, or "holier than thou."
+- Never guilt-trip. Push them forward with hope, not shame.
+- Always end with something they can DO — a move, a question, a next step. Never leave them just thinking.
+- If they're struggling or in real pain, slow down, be human, be kind — then still give them one small next step.
+- Keep the tone: real, warm, direct, a little bit hype (like a coach who believes in them), never fake, never salesy.
+
+## Example tone
+Person: "I keep failing at reading my Bible every day."
+Coach: "Yeah, that's normal — most people fall off by day 3. Here's the truth: God's not grading your streak, He just wants five minutes with you. So today, don't read a chapter. Read one verse. Set a timer for 2 minutes right now and open your Bible app. That's the whole move."`;
 
 export const CoachScreen: React.FC = () => {
   const { trigger } = useWebHaptics();
@@ -29,7 +66,9 @@ export const CoachScreen: React.FC = () => {
     const text = input.trim();
     if (!text || thinking) return;
 
-    try { trigger("selection"); } catch {}
+    try {
+      trigger("selection");
+    } catch {}
     play("click");
 
     const userMsg: Message = { role: "user", text };
@@ -54,7 +93,9 @@ export const CoachScreen: React.FC = () => {
       if (!res.ok) throw new Error("Coach unavailable");
       const data = await res.json();
 
-      try { trigger("success"); } catch {}
+      try {
+        trigger("success");
+      } catch {}
       play("notify");
       setMessages((prev) => [...prev, { role: "coach", text: data.reply }]);
     } catch {
@@ -75,19 +116,38 @@ export const CoachScreen: React.FC = () => {
   };
 
   return (
-    <div style={{
-      display: "flex",
-      flexDirection: "column",
-      height: "calc(100dvh - 80px)", // full viewport minus bottom nav
-      overflow: "hidden",
-    }}>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        height: "calc(100dvh - 80px)", // full viewport minus bottom nav
+        overflow: "hidden",
+      }}
+    >
       {/* Header */}
-      <div style={{ textAlign: "center", padding: "10px 0 12px", flexShrink: 0, borderBottom: "2px solid var(--border)" }}>
+      <div
+        style={{
+          textAlign: "center",
+          padding: "10px 0 12px",
+          flexShrink: 0,
+          borderBottom: "2px solid var(--border)",
+        }}
+      >
         <div style={{ fontSize: "30px", marginBottom: "4px" }}>🥊</div>
-        <h1 className="headline" style={{ fontSize: "18px", margin: "0 0 2px" }}>
+        <h1
+          className="headline"
+          style={{ fontSize: "18px", margin: "0 0 2px" }}
+        >
           Coach
         </h1>
-        <p style={{ fontSize: "12px", color: "var(--text-3)", margin: 0, fontWeight: "600" }}>
+        <p
+          style={{
+            fontSize: "12px",
+            color: "var(--text-3)",
+            margin: 0,
+            fontWeight: "600",
+          }}
+        >
           Real talk. No fluff.
         </p>
       </div>
@@ -116,16 +176,18 @@ export const CoachScreen: React.FC = () => {
               style={{
                 maxWidth: "80%",
                 padding: "10px 14px",
-                background: msg.role === "user" ? "var(--blue-dark)" : "var(--surface-2)",
+                background:
+                  msg.role === "user" ? "var(--blue-dark)" : "var(--surface-2)",
                 border: `2px solid ${msg.role === "user" ? "var(--blue)" : "var(--border)"}`,
                 color: "var(--text-1)",
                 fontSize: "14px",
                 lineHeight: 1.6,
                 fontFamily: "VT323, monospace",
                 letterSpacing: "0.3px",
-                boxShadow: msg.role === "user"
-                  ? "3px 3px 0 rgba(76,110,245,0.3)"
-                  : "3px 3px 0 rgba(0,0,0,0.4)",
+                boxShadow:
+                  msg.role === "user"
+                    ? "3px 3px 0 rgba(76,110,245,0.3)"
+                    : "3px 3px 0 rgba(0,0,0,0.4)",
               }}
             >
               {msg.text}
