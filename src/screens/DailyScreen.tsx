@@ -16,9 +16,9 @@ interface DailyScreenProps {
 const LevelUpDialog: React.FC<{ dayNumber: number; onClose: () => void }> = ({ dayNumber, onClose }) => {
   const { trigger } = useWebHaptics();
 
-  // Automatically trigger heavy haptic impact when the level up dialog opens
   useEffect(() => {
-    trigger("heavy");
+    try { trigger("heavy"); } catch {}
+    if (navigator.vibrate) navigator.vibrate([40, 60, 40]);
   }, []);
 
   return (
@@ -31,7 +31,14 @@ const LevelUpDialog: React.FC<{ dayNumber: number; onClose: () => void }> = ({ d
         <p style={{ color: "var(--text-2)", fontSize: "16px", lineHeight: 1.6, marginBottom: "24px" }}>
           All habits done. Streak extended. You're building something real — keep showing up.
         </p>
-        <button className="btn green full" onClick={() => { trigger("selection"); onClose(); }}>
+        <button
+          className="btn green full"
+          onClick={() => {
+            try { trigger("selection"); } catch {}
+            if (navigator.vibrate) navigator.vibrate(15);
+            onClose();
+          }}
+        >
           Continue
         </button>
       </div>
@@ -59,12 +66,12 @@ export const DailyScreen: React.FC<DailyScreenProps> = ({ profile, onRefresh, on
 
   const allCompleted = habits.every((h) => activeCompleted.includes(h.id));
 
-  // Auto-trigger level-up dialog + heavy haptic shockwave when all habits complete
   useEffect(() => {
     if (allCompleted && !didShowDialog && !lootClaimedToday) {
       setShowLevelUp(true);
       setDidShowDialog(true);
-      trigger("heavy");
+      try { trigger("heavy"); } catch {}
+      if (navigator.vibrate) navigator.vibrate([40, 60, 40]);
     }
   }, [allCompleted]);
 
@@ -94,8 +101,11 @@ export const DailyScreen: React.FC<DailyScreenProps> = ({ profile, onRefresh, on
     setOptimisticCompleted(nextCompleted);
     setOptimisticStats(nextStats);
 
+    // Trigger both web-haptics AND direct navigator.vibrate fallback
     if (!isCompleted) {
-      trigger("success");
+      try { trigger("success"); } catch {}
+      if (navigator.vibrate) navigator.vibrate([15, 30, 25]);
+
       confetti({
         particleCount: 80,
         spread: 60,
@@ -103,7 +113,8 @@ export const DailyScreen: React.FC<DailyScreenProps> = ({ profile, onRefresh, on
         colors: ["#4c6ef5", "#58cc02", "#ffc800"],
       });
     } else {
-      trigger("selection");
+      try { trigger("selection"); } catch {}
+      if (navigator.vibrate) navigator.vibrate(10);
     }
 
     try {
@@ -118,7 +129,9 @@ export const DailyScreen: React.FC<DailyScreenProps> = ({ profile, onRefresh, on
 
   const handleClaimLoot = async () => {
     if (!lootInput.trim()) return;
-    trigger("heavy");
+    try { trigger("heavy"); } catch {}
+    if (navigator.vibrate) navigator.vibrate([30, 50, 30]);
+
     setOptimisticLootClaimed(true);
     try {
       await api.game.claimLoot(dayNumber, lootInput.trim());
@@ -131,7 +144,9 @@ export const DailyScreen: React.FC<DailyScreenProps> = ({ profile, onRefresh, on
   };
 
   const handleSaveReflection = async () => {
-    trigger("selection");
+    try { trigger("selection"); } catch {}
+    if (navigator.vibrate) navigator.vibrate(12);
+
     setSavingRef(true);
     try {
       await api.game.saveReflection(refText);
@@ -191,7 +206,11 @@ export const DailyScreen: React.FC<DailyScreenProps> = ({ profile, onRefresh, on
               🔥 {activeStats.streak} day streak
             </div>
             <button
-              onClick={() => { trigger("selection"); onHelp(); }}
+              onClick={() => {
+                try { trigger("selection"); } catch {}
+                if (navigator.vibrate) navigator.vibrate(10);
+                onHelp();
+              }}
               style={{
                 width: "34px",
                 height: "34px",
