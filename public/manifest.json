@@ -1,17 +1,25 @@
 {
-  "short_name": "LevelUp",
-  "name": "LevelUp Nation",
+  "short_name": "TanStack App",
+  "name": "Create TanStack App Sample",
   "icons": [
     {
-      "src": "data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%23161b2e%22/><text y=%22.75em%22 x=%2210%22 font-size=%2270%22>🎮</text></svg>",
-      "type": "image/svg+xml",
-      "sizes": "512x512",
-      "purpose": "any maskable"
+      "src": "favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "logo192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "logo512.png",
+      "type": "image/png",
+      "sizes": "512x512"
     }
   ],
-  "start_url": "/",
-  "background_color": "#0d1117",
-  "theme_color": "#0d1117",
+  "start_url": ".",
   "display": "standalone",
-  "orientation": "portrait"
+  "theme_color": "#000000",
+  "background_color": "#ffffff"
 }
