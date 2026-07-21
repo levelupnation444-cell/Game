@@ -6,7 +6,7 @@
     "start": "bun run server.ts",
     "build:client": "bun run --cwd client build",
     "dev:client": "bun run --cwd client dev",
-    "build": "cd client && bun install && bun run build && mkdir -p ../public && mv dist/* ../public/"
+    "build": "cd client && bun install && bun run build && mkdir -p ../public && cp -rf dist/. ../public/"
   },
   "devDependencies": {
     "@types/bun": "latest"
