@@ -4,6 +4,7 @@ import { cors } from "hono/cors";
 import { SignJWT, jwtVerify } from "jose";
 import { Resend } from "resend";
 import { GoogleGenAI } from "@google/genai";
+import Stripe from "stripe";
 import { db, migrate, nanoid } from "./db.ts";
 
 /* ─── Init ─────────────────────────────────────────── */
@@ -112,38 +113,6 @@ async function requireSubscribedUser(c: any, next: any) {
   }
   c.set("user", user);
   await next();
-}
-
-async function verifyStripeSignature(payload: string, signatureHeader: string, secret: string) {
-  const parts = signatureHeader.split(",").reduce<Record<string, string[]>>((acc, part) => {
-    const [key, value] = part.split("=");
-    if (!key || !value) return acc;
-    acc[key] = [...(acc[key] || []), value];
-    return acc;
-  }, {});
-
-  const timestamp = parts.t?.[0];
-  const signatures = parts.v1 || [];
-  if (!timestamp || signatures.length === 0) return false;
-
-  const ageSeconds = Math.abs(Date.now() / 1000 - Number(timestamp));
-  if (!Number.isFinite(ageSeconds) || ageSeconds > 300) return false;
-
-  const encoder = new TextEncoder();
-  const key = await crypto.subtle.importKey(
-    "raw",
-    encoder.encode(secret),
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"]
-  );
-  const signedPayload = `${timestamp}.${payload}`;
-  const digest = await crypto.subtle.sign("HMAC", key, encoder.encode(signedPayload));
-  const expected = Array.from(new Uint8Array(digest))
-    .map((byte) => byte.toString(16).padStart(2, "0"))
-    .join("");
-
-  return signatures.some((signature) => signature === expected);
 }
 
 type Env = {
@@ -291,35 +260,24 @@ stripe.post("/checkout", async (c) => {
     return c.json({ error: `Missing Stripe price ID for ${plan} plan` }, 500);
   }
 
-  // Create Stripe Checkout session via REST API
-  const params = new URLSearchParams();
-  params.append("mode", "subscription");
-  params.append("customer_email", user.email);
-  params.append("client_reference_id", user.id);
-  params.append("success_url", `${APP_URL}/?payment=success`);
-  params.append("cancel_url", `${APP_URL}/?payment=cancel`);
-  params.append("line_items[0][price]", priceId);
-  params.append("line_items[0][quantity]", "1");
-  if (plan === "monthly") {
-    params.append("subscription_data[trial_period_days]", "3");
+  const stripeClient = new Stripe(stripeSecretKey);
+
+  try {
+    const session = await stripeClient.checkout.sessions.create({
+      mode: "subscription",
+      customer_email: user.email,
+      client_reference_id: user.id,
+      success_url: `${APP_URL}/?payment=success`,
+      cancel_url: `${APP_URL}/?payment=cancel`,
+      line_items: [{ price: priceId, quantity: 1 }],
+      subscription_data: plan === "monthly" ? { trial_period_days: 3 } : undefined,
+    });
+
+    return c.json({ url: session.url });
+  } catch (e: any) {
+    console.error("Stripe Checkout Session error:", e);
+    return c.json({ error: e.message || "Failed to create checkout session" }, 400);
   }
-
-  const stripeRes = await fetch("https://api.stripe.com/v1/checkout/sessions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${stripeSecretKey}`,
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body: params.toString(),
-  });
-
-  const sessionData = await stripeRes.json();
-  if (!stripeRes.ok) {
-    console.error("Stripe Checkout Session error:", sessionData);
-    return c.json({ error: sessionData.error?.message || "Failed to create checkout session" }, 400);
-  }
-
-  return c.json({ url: sessionData.url });
 });
 
 stripe.get("/verify", async (c) => {
@@ -332,22 +290,24 @@ stripe.get("/verify", async (c) => {
 });
 
 stripe.post("/webhook", async (c) => {
+  const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
   const stripeWebhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
   const bodyText = await c.req.text();
-
-  if (stripeWebhookSecret) {
-    const signatureHeader = c.req.header("stripe-signature") || "";
-    const validSignature = await verifyStripeSignature(bodyText, signatureHeader, stripeWebhookSecret);
-    if (!validSignature) {
-      return c.json({ error: "Invalid Stripe signature" }, 400);
-    }
-  }
   
-  let event: any;
+  let event: Stripe.Event | any;
   try {
-    event = JSON.parse(bodyText);
+    if (stripeSecretKey && stripeWebhookSecret) {
+      const stripeClient = new Stripe(stripeSecretKey);
+      event = await stripeClient.webhooks.constructEventAsync(
+        bodyText,
+        c.req.header("stripe-signature") || "",
+        stripeWebhookSecret
+      );
+    } else {
+      event = JSON.parse(bodyText);
+    }
   } catch (e) {
-    return c.json({ error: "Invalid JSON payload" }, 400);
+    return c.json({ error: "Invalid Stripe webhook payload" }, 400);
   }
 
   // Webhook event matching
