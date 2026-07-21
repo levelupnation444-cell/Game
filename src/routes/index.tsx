@@ -9,20 +9,22 @@ import { DailyScreen } from "../screens/DailyScreen";
 import { HealthScreen } from "../screens/HealthScreen";
 import { LeaderboardScreen } from "../screens/LeaderboardScreen";
 import { ProfileScreen } from "../screens/ProfileScreen";
+import { CoachScreen } from "../screens/CoachScreen";
 import { BottomNav } from "../components/BottomNav";
 import { api } from "../api";
 import type { ProfileData } from "../api";
 
-export const Route = createFileRoute("/")({
-  component: App,
-});
+export const Route = createFileRoute("/")(
+  { component: App }
+);
 
 const AppContent: React.FC = () => {
   const { user, loading: authLoading, refreshUser } = useAuth();
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [profileLoading, setProfileLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState("daily"); // daily, health, leaderboard, profile
+  const [activeTab, setActiveTab] = useState("daily"); // daily, health, leaderboard, coach
   const [overlayHow, setOverlayHow] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
 
   const fetchProfile = async () => {
     if (!user) return;
@@ -79,7 +81,34 @@ const AppContent: React.FC = () => {
     return <HowScreen onComplete={() => setOverlayHow(false)} isOverlay={true} />;
   }
 
-  // 6. Main Dashboard tabs
+  // 6. Profile modal (slide in from left on Daily screen)
+  if (showProfile && profile) {
+    return (
+      <div className="app-container">
+        <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "20px" }}>
+          <button
+            onClick={() => setShowProfile(false)}
+            style={{
+              background: "var(--surface-2)",
+              border: "2px solid var(--border)",
+              color: "var(--text-1)",
+              fontFamily: "Press Start 2P, monospace",
+              fontSize: "10px",
+              padding: "8px 12px",
+              cursor: "pointer",
+              boxShadow: "0 3px 0 var(--border-2)",
+            }}
+          >
+            ← Back
+          </button>
+          <span style={{ color: "var(--text-3)", fontSize: "13px", fontWeight: "700" }}>Profile</span>
+        </div>
+        <ProfileScreen profile={profile} onRefresh={fetchProfile} />
+      </div>
+    );
+  }
+
+  // 7. Main Dashboard tabs
   return (
     <div className="app-container">
       {activeTab === "daily" && profile && (
@@ -87,13 +116,12 @@ const AppContent: React.FC = () => {
           profile={profile}
           onRefresh={fetchProfile}
           onHelp={() => setOverlayHow(true)}
+          onProfile={() => setShowProfile(true)}
         />
       )}
       {activeTab === "health" && <HealthScreen />}
       {activeTab === "leaderboard" && <LeaderboardScreen />}
-      {activeTab === "profile" && profile && (
-        <ProfileScreen profile={profile} onRefresh={fetchProfile} />
-      )}
+      {activeTab === "coach" && <CoachScreen />}
 
       <BottomNav currentTab={activeTab} setTab={setActiveTab} />
     </div>

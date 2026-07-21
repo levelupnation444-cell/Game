@@ -712,4 +712,29 @@ app.get("/api/content", async (c) => {
   return c.json({ habits: HABITS, content: CONTENT });
 });
 
+/* ─── Coach (motivational chat) ─────────────────────── */
+app.post("/api/coach", async (c) => {
+  const user = await getUser(c);
+  if (!user) return c.json({ error: "Unauthorized" }, 401);
+
+  const { history, systemPrompt } = await c.req.json();
+
+  try {
+    const response = await ai.models.generateContent({
+      model: "gemini-3.1-flash-lite",
+      contents: [
+        { role: "user", parts: [{ text: systemPrompt }] },
+        { role: "model", parts: [{ text: "Got it." }] },
+        ...(history || []),
+      ],
+    });
+
+    const reply = response.text?.trim() || "Keep going. Don't stop now.";
+    return c.json({ reply });
+  } catch (e: any) {
+    console.error("Coach error:", e);
+    return c.json({ reply: "Can't connect right now. Keep pushing anyway." });
+  }
+});
+
 export default app;

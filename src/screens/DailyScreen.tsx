@@ -11,6 +11,7 @@ interface DailyScreenProps {
   profile: ProfileData;
   onRefresh: () => void;
   onHelp: () => void;
+  onProfile: () => void;
 }
 
 const LevelUpDialog: React.FC<{ dayNumber: number; onClose: () => void }> = ({ dayNumber, onClose }) => {
@@ -46,7 +47,7 @@ const LevelUpDialog: React.FC<{ dayNumber: number; onClose: () => void }> = ({ d
   );
 };
 
-export const DailyScreen: React.FC<DailyScreenProps> = ({ profile, onRefresh, onHelp }) => {
+export const DailyScreen: React.FC<DailyScreenProps> = ({ profile, onRefresh, onHelp, onProfile }) => {
   const { trigger } = useWebHaptics();
   const [lootInput, setLootInput] = useState("");
   const [refText, setRefText] = useState(profile.reflection);
@@ -173,7 +174,10 @@ export const DailyScreen: React.FC<DailyScreenProps> = ({ profile, onRefresh, on
           alignItems: "center",
           gap: "10px",
         }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <button
+            onClick={() => { try { trigger("selection"); } catch {} onProfile(); }}
+            style={{ display: "flex", alignItems: "center", gap: "10px", background: "none", border: "none", cursor: "pointer", padding: 0 }}
+          >
             <div style={{
               width: "40px",
               height: "40px",
@@ -191,7 +195,7 @@ export const DailyScreen: React.FC<DailyScreenProps> = ({ profile, onRefresh, on
             }}>
               {profile.user.name ? profile.user.name[0].toUpperCase() : "?"}
             </div>
-            <div>
+            <div style={{ textAlign: "left" }}>
               <div style={{ color: "var(--text-1)", fontWeight: "700", fontSize: "16px" }}>
                 {profile.user.name}
               </div>
@@ -199,7 +203,7 @@ export const DailyScreen: React.FC<DailyScreenProps> = ({ profile, onRefresh, on
                 {profile.user.class}
               </div>
             </div>
-          </div>
+          </button>
 
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             <div className="streak-badge">

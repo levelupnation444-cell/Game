@@ -36,14 +36,14 @@ export const BottomNav: React.FC<BottomNavProps> = ({ currentTab, setTab }) => {
         className={`nav-item ${currentTab === "leaderboard" ? "active" : ""}`}
       >
         <span className="nav-icon">🏆</span>
-        <span>Leaderboard</span>
+        <span>Ranks</span>
       </button>
       <button
-        onClick={() => handleTab("profile")}
-        className={`nav-item ${currentTab === "profile" ? "active" : ""}`}
+        onClick={() => handleTab("coach")}
+        className={`nav-item ${currentTab === "coach" ? "active" : ""}`}
       >
-        <span className="nav-icon">👤</span>
-        <span>Profile</span>
+        <span className="nav-icon">🥊</span>
+        <span>Coach</span>
       </button>
     </nav>
   );
