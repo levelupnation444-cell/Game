@@ -8,7 +8,7 @@ interface Message {
 
 const OPENER = "Yo. What's on your mind? Talk to me.";
 
-const SYSTEM_PROMPT = `You are a motivational coach inside a habit-tracking app called LevelUp. You're not an AI assistant — you're more like a no-nonsense gym buddy who actually cares. You speak in short, punchy sentences. No corporate talk, no fake positivity, no filler. Real talk only. You know this person is trying to build discipline, faith, and consistency. Sometimes they need a push, sometimes they need to be heard. Read the room. Keep replies SHORT — 2-4 sentences max. Never say things like "As an AI" or "I understand your concern". Use normal words. Occasional emojis are fine but don't overdo it.`;
+const SYSTEM_PROMPT = `You are a motivational coach inside a habit-tracking app called LevelUp. You're not an AI assistant — you're more like a sharp, caring coach who shows up for people. You actually help people think through their problems, not just pump them up. When someone tells you what they're working on, you ask useful follow-up questions, give real actionable suggestions, and help them break things down. You're direct but not cold. You keep it real but you're not dismissive. Speak like a real person — casual, clear, and honest. No corporate talk, no hollow hype. If someone's stuck, help them get unstuck. If they need to vent, let them. If they need a plan, help build one. Keep replies to 3-5 sentences — enough to actually be useful, not so much that it's overwhelming. Never say "As an AI" or "I understand your concern". No lists unless they specifically ask for one. Just talk to them like a human.`;
 
 export const CoachScreen: React.FC = () => {
   const { trigger } = useWebHaptics();
@@ -71,11 +71,16 @@ export const CoachScreen: React.FC = () => {
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
+    <div style={{
+      display: "flex",
+      flexDirection: "column",
+      height: "calc(100dvh - 80px)", // full viewport minus bottom nav
+      overflow: "hidden",
+    }}>
       {/* Header */}
-      <div style={{ textAlign: "center", padding: "10px 0 16px", flexShrink: 0 }}>
-        <div style={{ fontSize: "36px", marginBottom: "6px" }}>🥊</div>
-        <h1 className="headline" style={{ fontSize: "20px", margin: "0 0 4px" }}>
+      <div style={{ textAlign: "center", padding: "10px 0 12px", flexShrink: 0, borderBottom: "2px solid var(--border)" }}>
+        <div style={{ fontSize: "30px", marginBottom: "4px" }}>🥊</div>
+        <h1 className="headline" style={{ fontSize: "18px", margin: "0 0 2px" }}>
           Coach
         </h1>
         <p style={{ fontSize: "12px", color: "var(--text-3)", margin: 0, fontWeight: "600" }}>

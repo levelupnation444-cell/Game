@@ -121,7 +121,11 @@ const AppContent: React.FC = () => {
       )}
       {activeTab === "health" && <HealthScreen />}
       {activeTab === "leaderboard" && <LeaderboardScreen />}
-      {activeTab === "coach" && <CoachScreen />}
+      {activeTab === "coach" && (
+        <div style={{ margin: "-20px -16px", padding: "0 16px" }}>
+          <CoachScreen />
+        </div>
+      )}
 
       <BottomNav currentTab={activeTab} setTab={setActiveTab} />
     </div>
