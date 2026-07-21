@@ -6,7 +6,10 @@ import { Resend } from "resend";
 import { db, migrate, nanoid } from "./db.js";
 
 /* ─── Init ─────────────────────────────────────────── */
-await migrate();
+let migrated = false;
+async function ensureMigrated() {
+  if (!migrated) { await migrate(); migrated = true; }
+}
 
 const app = new Hono();
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -17,6 +20,7 @@ const APP_URL = process.env.APP_URL || "http://localhost:3000";
 
 /* ─── CORS ──────────────────────────────────────────── */
 app.use("*", cors({ origin: APP_URL, credentials: true }));
+app.use("*", async (_c, next) => { await ensureMigrated(); await next(); });
 
 /* ─── Content data (shared with client via API) ─────── */
 const HABITS = [
@@ -418,26 +422,5 @@ app.get("/api/leaderboard", async (c) => {
 app.get("/api/content", async (c) => {
   return c.json({ habits: HABITS, content: CONTENT });
 });
-
-/* ─── Static files (client build) ──────────────────── */
-// In production Vercel environments, Vercel routes static files directly via rewrites.
-// Hono serves static files locally in dev.
-if (typeof Bun !== "undefined") {
-  const { serveStatic } = await import("hono/bun");
-  app.use("/assets/*", serveStatic({ root: "./client/dist" }));
-  app.use("/favicon.ico", serveStatic({ root: "./client/dist" }));
-  app.use("/manifest.json", serveStatic({ root: "./client/dist" }));
-  app.get("*", serveStatic({ path: "./client/dist/index.html" }));
-}
-
-/* ─── Start ─────────────────────────────────────────── */
-if (typeof Bun !== "undefined") {
-  const port = Number(process.env.PORT || 3000);
-  console.log(`🎮 LevelUp server running at http://localhost:${port}`);
-  Bun.serve({
-    port,
-    fetch: app.fetch
-  });
-}
 
 export default app;

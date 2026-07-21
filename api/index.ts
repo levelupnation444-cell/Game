@@ -1,5 +1,5 @@
 import { handle } from "hono/vercel";
 import app from "../server.js";
 
-export const runtime = "edge";
+export const runtime = "nodejs";
 export default handle(app);
