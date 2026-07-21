@@ -579,7 +579,7 @@ health.post("/food/ai", async (c) => {
           },
         },
         {
-          text: `Analyze this food image. Return STRICT JSON with keys: "name" (short dish name), "calories" (integer), "protein" (grams integer), "carbs" (grams integer), "fat" (grams integer). No markdown code blocks, just raw JSON.`,
+          text: `Analyze this image. Return STRICT raw JSON (no markdown) with these keys: "detected" (boolean, true only if food/drink is clearly visible), "name" (short dish name or null), "calories" (integer or null), "protein" (grams integer or null), "carbs" (grams integer or null), "fat" (grams integer or null). If no food is detected, return {"detected":false}.`,
         },
       ],
     });
@@ -588,13 +588,17 @@ health.post("/food/ai", async (c) => {
     const cleanJson = rawText.replace(/```json/g, "").replace(/```/g, "").trim();
     const parsed = JSON.parse(cleanJson);
 
+    if (!parsed.detected) {
+      return c.json({ error: "No food detected" }, 422);
+    }
+
     const logId = nanoid();
     const today = new Date().toISOString().slice(0, 10);
     const name = parsed.name || "Meal";
-    const calories = Number(parsed.calories) || 350;
-    const protein = Number(parsed.protein) || 15;
-    const carbs = Number(parsed.carbs) || 40;
-    const fat = Number(parsed.fat) || 10;
+    const calories = Number(parsed.calories) || 0;
+    const protein = Number(parsed.protein) || 0;
+    const carbs = Number(parsed.carbs) || 0;
+    const fat = Number(parsed.fat) || 0;
 
     await db.execute({
       sql: `INSERT INTO food_logs (id, user_id, name, calories, protein, carbs, fat, date)

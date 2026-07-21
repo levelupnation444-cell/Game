@@ -61,7 +61,7 @@ export const HealthScreen: React.FC = () => {
         try { trigger("success"); } catch {}
         await fetchHealth();
       } catch (err: any) {
-        alert(err.message || "Failed to analyze meal image.");
+        alert(err.message === "No food detected" ? "🍽️ No food detected in this image." : (err.message || "Failed to analyze meal image."));
       } finally {
         setAnalyzing(false);
         if (fileInputRef.current) fileInputRef.current.value = "";
