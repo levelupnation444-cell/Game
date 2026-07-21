@@ -44,7 +44,7 @@ export const CreateScreen: React.FC<CreateScreenProps> = ({ onComplete, initialN
 
   return (
     <div className="center-screen" style={{ minHeight: "85vh" }}>
-      <span className="tag">Character Creation</span>
+      <span className="tag blue">Character Creation</span>
       <h1 className="headline" style={{ fontSize: "28px" }}>Who are you showing up as?</h1>
 
       <div className="form-block">
@@ -74,17 +74,17 @@ export const CreateScreen: React.FC<CreateScreenProps> = ({ onComplete, initialN
                 className={`class-card ${selectedClass === c.id ? "selected" : ""}`}
                 onClick={() => setSelectedClass(c.id)}
                 style={{
-                  background: selectedClass === c.id ? "var(--blue-soft)" : "rgba(22, 27, 46, 0.4)",
-                  border: `1.5px solid ${selectedClass === c.id ? "var(--blue)" : "rgba(255, 255, 255, 0.05)"}`,
-                  borderRadius: "12px",
+                  background: selectedClass === c.id ? "rgba(76, 110, 245, 0.08)" : "var(--surface)",
+                  border: `2px solid ${selectedClass === c.id ? "var(--blue)" : "var(--border)"}`,
+                  borderRadius: "var(--radius)",
                   padding: "14px 18px",
                   cursor: "pointer",
                   textAlign: "left",
-                  transition: "all 0.2s ease"
+                  transition: "all 0.15s ease"
                 }}
               >
-                <h3 style={{ fontSize: "15px", color: "var(--head)", marginBottom: "4px" }}>{c.name}</h3>
-                <p style={{ fontSize: "12.5px", color: "var(--body)", margin: 0, lineHeight: 1.4 }}>{c.line}</p>
+                <h3 style={{ fontSize: "15px", color: "var(--text-1)", fontWeight: "700", marginBottom: "4px" }}>{c.name}</h3>
+                <p style={{ fontSize: "12.5px", color: "var(--text-2)", margin: 0, lineHeight: 1.4 }}>{c.line}</p>
               </div>
             ))}
           </div>

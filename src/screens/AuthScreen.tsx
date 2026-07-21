@@ -13,10 +13,8 @@ export const AuthScreen: React.FC = () => {
       setError("Please enter a valid email address.");
       return;
     }
-
     setLoading(true);
     setError("");
-
     try {
       await api.auth.sendMagicLink(email.trim());
       setSent(true);
@@ -30,23 +28,29 @@ export const AuthScreen: React.FC = () => {
   return (
     <div className="center-screen">
       <div className="tag-row">
-        <span className="tag">Purpose Path</span>
-        <span className="tag white">Level 1: Wake Up</span>
+        <span className="tag blue">Purpose Path</span>
+        <span className="tag">Level 1: Wake Up</span>
       </div>
-      <h1 className="headline" style={{ fontSize: "38px" }}>Level One</h1>
-      <p style={{ color: "var(--body)", fontSize: "16px", maxWidth: "440px", lineHeight: "1.6" }}>
+
+      <h1 className="headline" style={{ fontSize: "40px", letterSpacing: "-0.5px" }}>
+        Level One
+      </h1>
+      <p style={{ color: "var(--text-2)", fontSize: "15px", maxWidth: "380px", lineHeight: 1.7, margin: 0 }}>
         A heavily gamified daily habit tracker built to walk the purpose path. Sign in below via magic link.
       </p>
 
-      <div className="card" style={{ width: "100%", maxWidth: "400px", marginTop: "12px" }}>
+      <div className="card" style={{ width: "100%", maxWidth: "400px" }}>
         {sent ? (
           <div style={{ textAlign: "center", padding: "10px 0" }}>
-            <span style={{ fontSize: "40px" }}>✉️</span>
-            <h2 className="headline" style={{ fontSize: "20px", marginTop: "14px", marginBottom: "8px" }}>Link Dispatched</h2>
-            <p style={{ color: "var(--body)", fontSize: "14px", lineHeight: "1.5" }}>
-              Check <strong>{email}</strong> for your sign-in link. (Be sure to check your spam/junk folder if you don't see it).
+            <span style={{ fontSize: "48px" }}>✉️</span>
+            <h2 className="headline" style={{ fontSize: "22px", margin: "14px 0 8px" }}>
+              Link Dispatched
+            </h2>
+            <p style={{ color: "var(--text-2)", fontSize: "14px", lineHeight: 1.6, margin: "0 0 20px" }}>
+              Check <strong style={{ color: "var(--text-1)" }}>{email}</strong> for your sign-in link.
+              Check spam if you don't see it.
             </p>
-            <button className="btn ghost small" style={{ marginTop: "14px" }} onClick={() => setSent(false)}>
+            <button className="btn ghost" onClick={() => setSent(false)}>
               Back
             </button>
           </div>
@@ -63,7 +67,11 @@ export const AuthScreen: React.FC = () => {
                 disabled={loading}
               />
             </div>
-            {error && <div style={{ color: "#ff6b6b", fontSize: "13px", fontWeight: "600" }}>⚠️ {error}</div>}
+            {error && (
+              <div style={{ color: "#ff6b6b", fontSize: "13px", fontWeight: "600" }}>
+                ⚠️ {error}
+              </div>
+            )}
             <button type="submit" className="btn full" disabled={loading}>
               {loading ? "Sending..." : "Receive Magic Link"}
             </button>

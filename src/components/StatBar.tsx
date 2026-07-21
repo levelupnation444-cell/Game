@@ -3,45 +3,35 @@ import React from "react";
 interface StatBarProps {
   label: string;
   val: number;
+  color?: "blue" | "green" | "gold";
 }
 
-export const StatBar: React.FC<StatBarProps> = ({ label, val }) => {
+export const StatBar: React.FC<StatBarProps> = ({ label, val, color = "blue" }) => {
   return (
-    <div className="stat-box" style={{
-      background: "rgba(22, 27, 46, 0.6)",
-      border: "1px solid rgba(59, 91, 219, 0.15)",
-      borderRadius: "12px",
-      padding: "10px",
-      textAlign: "center",
-      minWidth: "70px",
-      flex: 1
-    }}>
-      <div className="stat-name" style={{
-        fontSize: "10px",
+    <div className="stat-box">
+      <div style={{
+        fontSize: "9px",
         fontWeight: "700",
-        color: "var(--body)",
-        letterSpacing: "0.06em",
+        color: "var(--text-3)",
+        letterSpacing: "0.08em",
         textTransform: "uppercase",
-        marginBottom: "4px"
+        marginBottom: "4px",
       }}>{label}</div>
-      <div className="stat-val" style={{
-        fontSize: "13px",
-        color: "var(--head)",
-        fontWeight: "700",
-        marginBottom: "6px"
+      <div style={{
+        fontSize: "14px",
+        color: "var(--text-1)",
+        fontWeight: "800",
+        fontFamily: "Nunito, sans-serif",
+        marginBottom: "6px",
       }}>{val}</div>
-      <div className="bar-track" style={{
-        height: "6px",
-        background: "rgba(255, 255, 255, 0.08)",
-        borderRadius: "99px",
-        overflow: "hidden"
-      }}>
-        <div className="bar-fill" style={{
-          height: "100%",
-          width: `${Math.min(100, Math.max(0, val))}%`,
-          borderRadius: "99px",
-          transition: "width 0.4s cubic-bezier(0.4, 0, 0.2, 1)"
-        }}></div>
+      <div className="bar-track">
+        <div
+          className={`bar-fill ${color}`}
+          style={{
+            width: `${Math.min(100, Math.max(0, val))}%`,
+            transition: "width 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
+          }}
+        />
       </div>
     </div>
   );
