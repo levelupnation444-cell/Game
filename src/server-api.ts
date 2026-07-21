@@ -619,6 +619,41 @@ health.post("/food/ai", async (c) => {
   }
 });
 
+health.post("/food/manual", async (c) => {
+  const user = c.get("user");
+  const { name, calories, protein, carbs, fat } = await c.req.json();
+
+  if (!name || !calories) {
+    return c.json({ error: "Name and calories required" }, 400);
+  }
+
+  const logId = nanoid();
+  const today = new Date().toISOString().slice(0, 10);
+  const foodName = name.trim();
+  const calVal = Number(calories) || 0;
+  const pVal = Number(protein) || 0;
+  const cVal = Number(carbs) || 0;
+  const fVal = Number(fat) || 0;
+
+  await db.execute({
+    sql: `INSERT INTO food_logs (id, user_id, name, calories, protein, carbs, fat, date)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    args: [logId, user.id, foodName, calVal, pVal, cVal, fVal, today],
+  });
+
+  return c.json({
+    log: {
+      id: logId,
+      name: foodName,
+      calories: calVal,
+      protein: pVal,
+      carbs: cVal,
+      fat: fVal,
+      createdAt: new Date().toISOString(),
+    },
+  });
+});
+
 health.delete("/food/:id", async (c) => {
   const user = c.get("user");
   const id = c.req.param("id");

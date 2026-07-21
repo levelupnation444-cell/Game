@@ -146,6 +146,7 @@ export const api = {
   health: {
     get: () => request<HealthData>("/api/health"),
     logFoodAI: (imageBase64: string) => request<{ log: FoodLog }>("/api/health/food/ai", { method: "POST", body: JSON.stringify({ imageBase64 }) }),
+    logFoodManual: (name: string, calories: number, protein?: number, carbs?: number, fat?: number) => request<{ log: FoodLog }>("/api/health/food/manual", { method: "POST", body: JSON.stringify({ name, calories, protein, carbs, fat }) }),
     deleteFood: (id: string) => request<{ ok: boolean }>(`/api/health/food/${id}`, { method: "DELETE" }),
     addWater: (amount: number) => request<{ ok: boolean }>("/api/health/water", { method: "POST", body: JSON.stringify({ amount }) }),
     updateGoals: (calorieGoal: number, waterGoal: number) => request<{ ok: boolean }>("/api/health/goals", { method: "POST", body: JSON.stringify({ calorieGoal, waterGoal }) }),

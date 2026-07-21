@@ -9,6 +9,15 @@ export const HealthScreen: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [analyzing, setAnalyzing] = useState(false);
   const [editingGoals, setEditingGoals] = useState(false);
+  const [showManualForm, setShowManualForm] = useState(false);
+
+  // Manual Food Form State
+  const [manualName, setManualName] = useState("");
+  const [manualCalories, setManualCalories] = useState("");
+  const [manualProtein, setManualProtein] = useState("");
+  const [manualCarbs, setManualCarbs] = useState("");
+  const [manualFat, setManualFat] = useState("");
+  const [submittingManual, setSubmittingManual] = useState(false);
 
   // Optimistic water state
   const [optimisticWater, setOptimisticWater] = useState<number | null>(null);
@@ -59,6 +68,34 @@ export const HealthScreen: React.FC = () => {
       }
     };
     reader.readAsDataURL(file);
+  };
+
+  const handleManualFoodSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!manualName.trim() || !manualCalories.trim()) return;
+
+    setSubmittingManual(true);
+    try {
+      await api.health.logFoodManual(
+        manualName.trim(),
+        Number(manualCalories),
+        Number(manualProtein) || 0,
+        Number(manualCarbs) || 0,
+        Number(manualFat) || 0
+      );
+      try { trigger("success"); } catch {}
+      setManualName("");
+      setManualCalories("");
+      setManualProtein("");
+      setManualCarbs("");
+      setManualFat("");
+      setShowManualForm(false);
+      await fetchHealth();
+    } catch (e) {
+      console.error("Failed to log food manually", e);
+    } finally {
+      setSubmittingManual(false);
+    }
   };
 
   const handleAddWater = async (amount: number) => {
@@ -233,27 +270,102 @@ export const HealthScreen: React.FC = () => {
         </div>
       </div>
 
-      {/* AI Calorie Tracker Section */}
+      {/* Calorie Tracker Section */}
       <div className="card" style={{ marginBottom: "24px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px", flexWrap: "wrap", gap: "10px" }}>
           <h2 className="headline" style={{ fontSize: "16px", margin: 0 }}>
-            AI Meal Scanner
+            Meal Logger
           </h2>
-          <input
-            type="file"
-            accept="image/*"
-            ref={fileInputRef}
-            onChange={handleImageUpload}
-            style={{ display: "none" }}
-          />
-          <button
-            className="btn small green"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={analyzing}
-          >
-            {analyzing ? "Analyzing..." : "📸 Scan Food"}
-          </button>
+          <div style={{ display: "flex", gap: "8px" }}>
+            <input
+              type="file"
+              accept="image/*"
+              ref={fileInputRef}
+              onChange={handleImageUpload}
+              style={{ display: "none" }}
+            />
+            <button
+              className="btn small ghost"
+              onClick={() => setShowManualForm(!showManualForm)}
+            >
+              ✏️ Manual
+            </button>
+            <button
+              className="btn small green"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={analyzing}
+            >
+              {analyzing ? "Analyzing..." : "📸 Scan Food"}
+            </button>
+          </div>
         </div>
+
+        {/* Manual Input Form */}
+        {showManualForm && (
+          <form onSubmit={handleManualFoodSubmit} style={{ display: "flex", flexDirection: "column", gap: "10px", marginBottom: "16px", background: "var(--surface-2)", padding: "12px", border: "2px solid var(--border)" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: "8px" }}>
+              <div>
+                <label className="form-label" style={{ fontSize: "8px" }}>Food Name</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Chicken Rice"
+                  value={manualName}
+                  onChange={(e) => setManualName(e.target.value)}
+                  required
+                />
+              </div>
+              <div>
+                <label className="form-label" style={{ fontSize: "8px" }}>Calories</label>
+                <input
+                  type="number"
+                  placeholder="kcal"
+                  value={manualCalories}
+                  onChange={(e) => setManualCalories(e.target.value)}
+                  required
+                />
+              </div>
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "8px" }}>
+              <div>
+                <label className="form-label" style={{ fontSize: "8px" }}>Protein (g)</label>
+                <input
+                  type="number"
+                  placeholder="0"
+                  value={manualProtein}
+                  onChange={(e) => setManualProtein(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="form-label" style={{ fontSize: "8px" }}>Carbs (g)</label>
+                <input
+                  type="number"
+                  placeholder="0"
+                  value={manualCarbs}
+                  onChange={(e) => setManualCarbs(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="form-label" style={{ fontSize: "8px" }}>Fat (g)</label>
+                <input
+                  type="number"
+                  placeholder="0"
+                  value={manualFat}
+                  onChange={(e) => setManualFat(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px", marginTop: "4px" }}>
+              <button type="button" className="btn small ghost" onClick={() => setShowManualForm(false)} disabled={submittingManual}>
+                Cancel
+              </button>
+              <button type="submit" className="btn small green" disabled={submittingManual || !manualName.trim() || !manualCalories.trim()}>
+                {submittingManual ? "Saving..." : "Add Meal"}
+              </button>
+            </div>
+          </form>
+        )}
 
         {analyzing && (
           <div style={{ textAlign: "center", padding: "16px 0", color: "var(--gold)", fontWeight: "700" }}>
@@ -265,7 +377,7 @@ export const HealthScreen: React.FC = () => {
         <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
           {data.foodLogs.length === 0 ? (
             <div style={{ textAlign: "center", padding: "16px", color: "var(--text-3)", fontStyle: "italic", fontSize: "14px" }}>
-              No meals logged today. Take a photo to estimate calories!
+              No meals logged today. Scan a photo or enter manually!
             </div>
           ) : (
             data.foodLogs.map((item) => (
