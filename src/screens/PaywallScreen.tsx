@@ -280,13 +280,14 @@ export const PaywallScreen: React.FC<PaywallScreenProps> = ({ onSuccess }) => {
           <div
             onClick={() => setSelectedPlan("monthly")}
             style={{
+              position: "relative",
               background:
                 selectedPlan === "monthly"
-                  ? "linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(30, 41, 59, 0.8) 100%)"
+                  ? "linear-gradient(135deg, rgba(34, 197, 94, 0.16) 0%, rgba(30, 41, 59, 0.84) 100%)"
                   : "rgba(30, 41, 59, 0.4)",
               border:
                 selectedPlan === "monthly"
-                  ? "2px solid #6366f1"
+                  ? "2px solid #22c55e"
                   : "1px solid rgba(255, 255, 255, 0.1)",
               borderRadius: "16px",
               padding: "18px 20px",
@@ -295,26 +296,48 @@ export const PaywallScreen: React.FC<PaywallScreenProps> = ({ onSuccess }) => {
               textAlign: "left",
             }}
           >
+            <div
+              style={{
+                position: "absolute",
+                top: "-10px",
+                right: "16px",
+                background: "linear-gradient(90deg, #22c55e, #16a34a)",
+                color: "#04130a",
+                fontSize: "10px",
+                fontWeight: 900,
+                padding: "3px 10px",
+                borderRadius: "12px",
+                textTransform: "uppercase",
+                letterSpacing: "0.5px",
+                boxShadow: "0 2px 8px rgba(34, 197, 94, 0.35)",
+              }}
+            >
+              3 DAY FREE TRIAL
+            </div>
+
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                 <input
                   type="radio"
                   checked={selectedPlan === "monthly"}
                   onChange={() => setSelectedPlan("monthly")}
-                  style={{ accentColor: "#6366f1", width: "18px", height: "18px" }}
+                  style={{ accentColor: "#22c55e", width: "18px", height: "18px" }}
                 />
                 <div>
                   <div style={{ fontWeight: 800, fontSize: "16px", color: "#ffffff" }}>
                     Monthly Access
                   </div>
                   <div style={{ fontSize: "12px", color: "#94a3b8", marginTop: "2px" }}>
-                    Flexible, cancel anytime
+                    Try free for 3 days, then $9.99/mo
                   </div>
                 </div>
               </div>
               <div style={{ textAlign: "right" }}>
-                <div style={{ fontWeight: 800, fontSize: "18px", color: "#ffffff" }}>
-                  $9.99<span style={{ fontSize: "12px", color: "#94a3b8" }}>/mo</span>
+                <div style={{ fontWeight: 900, fontSize: "18px", color: "#22c55e" }}>
+                  FREE
+                </div>
+                <div style={{ fontSize: "10px", color: "#94a3b8" }}>
+                  3 days
                 </div>
               </div>
             </div>
@@ -359,7 +382,11 @@ export const PaywallScreen: React.FC<PaywallScreenProps> = ({ onSuccess }) => {
             opacity: loading ? 0.7 : 1,
           }}
         >
-          {loading ? "PREPARING CHECKOUT..." : "START YOUR LEVELUP JOURNEY ⚡"}
+          {loading
+            ? "PREPARING CHECKOUT..."
+            : selectedPlan === "monthly"
+              ? "START 3 DAY FREE TRIAL ⚡"
+              : "START YOUR LEVELUP JOURNEY ⚡"}
         </button>
 
         {/* Security & Money-Back Notice */}

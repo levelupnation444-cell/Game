@@ -300,6 +300,9 @@ stripe.post("/checkout", async (c) => {
   params.append("cancel_url", `${APP_URL}/?payment=cancel`);
   params.append("line_items[0][price]", priceId);
   params.append("line_items[0][quantity]", "1");
+  if (plan === "monthly") {
+    params.append("subscription_data[trial_period_days]", "3");
+  }
 
   const stripeRes = await fetch("https://api.stripe.com/v1/checkout/sessions", {
     method: "POST",
