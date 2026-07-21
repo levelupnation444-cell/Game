@@ -16,6 +16,7 @@ interface DailyScreenProps {
 const LevelUpDialog: React.FC<{ dayNumber: number; onClose: () => void }> = ({ dayNumber, onClose }) => {
   const { trigger } = useWebHaptics();
 
+  // Automatically trigger heavy haptic impact when the level up dialog opens
   useEffect(() => {
     trigger("heavy");
   }, []);
@@ -58,10 +59,12 @@ export const DailyScreen: React.FC<DailyScreenProps> = ({ profile, onRefresh, on
 
   const allCompleted = habits.every((h) => activeCompleted.includes(h.id));
 
+  // Auto-trigger level-up dialog + heavy haptic shockwave when all habits complete
   useEffect(() => {
     if (allCompleted && !didShowDialog && !lootClaimedToday) {
       setShowLevelUp(true);
       setDidShowDialog(true);
+      trigger("heavy");
     }
   }, [allCompleted]);
 
