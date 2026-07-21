@@ -423,4 +423,12 @@ app.get("/api/content", async (c) => {
   return c.json({ habits: HABITS, content: CONTENT });
 });
 
+/* ─── Local dev server (Bun only) ──────────────────── */
+if (typeof Bun !== "undefined") {
+  const port = Number(process.env.PORT || 3000);
+  console.log(`🎮 LevelUp server running at http://localhost:${port}`);
+  // @ts-ignore
+  Bun.serve({ port, fetch: app.fetch });
+}
+
 export default app;
