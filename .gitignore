@@ -3,8 +3,9 @@ node_modules
 
 # output
 out
-dist
 *.tgz
+# keep /public tracked (Vercel static files)
+client/dist
 
 # code coverage
 coverage

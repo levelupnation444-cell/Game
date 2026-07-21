@@ -1,5 +1,5 @@
 {
-  "buildCommand": "cd client && npm install && npm run build && mkdir -p ../public && cp -r dist/* ../public/",
+  "outputDirectory": "public",
   "rewrites": [
     {
       "source": "/api/:path*",
