@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { AuthProvider, useAuth } from "../hooks/useAuth";
 import { AuthScreen } from "../screens/AuthScreen";
+import { PaywallScreen } from "../screens/PaywallScreen";
 import { CreateScreen } from "../screens/CreateScreen";
 import { HowScreen } from "../screens/HowScreen";
 import { LevelIntroScreen } from "../screens/LevelIntroScreen";
@@ -26,6 +27,16 @@ const AppContent: React.FC = () => {
   const [overlayHow, setOverlayHow] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
 
+  useEffect(() => {
+    // Check if returning from payment checkout
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has("payment")) {
+      refreshUser();
+      // clean URL query params
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, []);
+
   const fetchProfile = async () => {
     if (!user) return;
     setProfileLoading(true);
@@ -40,14 +51,14 @@ const AppContent: React.FC = () => {
   };
 
   useEffect(() => {
-    if (user) {
+    if (user && user.is_subscribed) {
       fetchProfile();
     } else {
       setProfile(null);
     }
   }, [user]);
 
-  if (authLoading || (user && !profile && profileLoading)) {
+  if (authLoading || (user && user.is_subscribed && !profile && profileLoading)) {
     return (
       <div className="center-screen">
         <span style={{ fontSize: "28px" }}>🛡️</span>
@@ -59,6 +70,11 @@ const AppContent: React.FC = () => {
   // 1. Unauthenticated view
   if (!user) {
     return <AuthScreen />;
+  }
+
+  // 2. HARD PAYWALL: Must pay via Stripe after signing in
+  if (!user.is_subscribed) {
+    return <PaywallScreen onSuccess={refreshUser} />;
   }
 
   // 2. Profile needs setup (name/class)

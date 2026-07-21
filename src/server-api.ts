@@ -81,6 +81,10 @@ interface UserRow {
   seen_level_intro: number;
   calorie_goal?: number;
   water_goal?: number;
+  is_subscribed: number;
+  stripe_customer_id?: string;
+  stripe_subscription_id?: string;
+  subscription_status?: string;
   created_at: string;
 }
 
@@ -91,6 +95,55 @@ async function getUser(c: any) {
   if (!payload?.sub) return null;
   const row = await db.execute({ sql: "SELECT * FROM users WHERE id = ?", args: [payload.sub as string] });
   return (row.rows[0] as unknown as UserRow) || null;
+}
+
+function hasActiveSubscription(user: UserRow | null) {
+  return Boolean(
+    user?.is_subscribed &&
+    (user.subscription_status === "active" || user.subscription_status === "trialing")
+  );
+}
+
+async function requireSubscribedUser(c: any, next: any) {
+  const user = await getUser(c);
+  if (!user) return c.json({ error: "Unauthorized" }, 401);
+  if (!hasActiveSubscription(user)) {
+    return c.json({ error: "Subscription required" }, 402);
+  }
+  c.set("user", user);
+  await next();
+}
+
+async function verifyStripeSignature(payload: string, signatureHeader: string, secret: string) {
+  const parts = signatureHeader.split(",").reduce<Record<string, string[]>>((acc, part) => {
+    const [key, value] = part.split("=");
+    if (!key || !value) return acc;
+    acc[key] = [...(acc[key] || []), value];
+    return acc;
+  }, {});
+
+  const timestamp = parts.t?.[0];
+  const signatures = parts.v1 || [];
+  if (!timestamp || signatures.length === 0) return false;
+
+  const ageSeconds = Math.abs(Date.now() / 1000 - Number(timestamp));
+  if (!Number.isFinite(ageSeconds) || ageSeconds > 300) return false;
+
+  const encoder = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    "raw",
+    encoder.encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"]
+  );
+  const signedPayload = `${timestamp}.${payload}`;
+  const digest = await crypto.subtle.sign("HMAC", key, encoder.encode(signedPayload));
+  const expected = Array.from(new Uint8Array(digest))
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
+
+  return signatures.some((signature) => signature === expected);
 }
 
 type Env = {
@@ -205,14 +258,137 @@ auth.get("/me", async (c) => {
 
 app.route("/api/auth", auth);
 
+/* ─── Stripe routes ──────────────────────────────────── */
+const stripe = new Hono<Env>();
+
+stripe.post("/checkout", async (c) => {
+  const user = await getUser(c);
+  if (!user) return c.json({ error: "Unauthorized" }, 401);
+
+  const { plan } = await c.req.json().catch(() => ({ plan: "yearly" }));
+  if (plan !== "monthly" && plan !== "yearly") {
+    return c.json({ error: "Invalid subscription plan" }, 400);
+  }
+
+  const monthlyPriceId = process.env.STRIPE_PRICE_ID_MONTHLY || "";
+  const yearlyPriceId = process.env.STRIPE_PRICE_ID_YEARLY || "";
+
+  const priceId = plan === "monthly" ? monthlyPriceId : yearlyPriceId;
+  const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+
+  if (!stripeSecretKey) {
+    // Graceful test mode fallback if secret key not set yet
+    console.warn("⚠️ STRIPE_SECRET_KEY missing. Simulating checkout for dev environment.");
+    // In dev simulation, mark user as subscribed directly so testing works cleanly
+    await db.execute({
+      sql: "UPDATE users SET is_subscribed = 1, subscription_status = 'active' WHERE id = ?",
+      args: [user.id],
+    });
+    return c.json({ url: `${APP_URL}/?payment=success_simulated` });
+  }
+
+  if (!priceId) {
+    return c.json({ error: `Missing Stripe price ID for ${plan} plan` }, 500);
+  }
+
+  // Create Stripe Checkout session via REST API
+  const params = new URLSearchParams();
+  params.append("mode", "subscription");
+  params.append("customer_email", user.email);
+  params.append("client_reference_id", user.id);
+  params.append("success_url", `${APP_URL}/?payment=success`);
+  params.append("cancel_url", `${APP_URL}/?payment=cancel`);
+  params.append("line_items[0][price]", priceId);
+  params.append("line_items[0][quantity]", "1");
+
+  const stripeRes = await fetch("https://api.stripe.com/v1/checkout/sessions", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${stripeSecretKey}`,
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body: params.toString(),
+  });
+
+  const sessionData = await stripeRes.json();
+  if (!stripeRes.ok) {
+    console.error("Stripe Checkout Session error:", sessionData);
+    return c.json({ error: sessionData.error?.message || "Failed to create checkout session" }, 400);
+  }
+
+  return c.json({ url: sessionData.url });
+});
+
+stripe.get("/verify", async (c) => {
+  const user = await getUser(c);
+  if (!user) return c.json({ is_subscribed: false, status: "unauthenticated" });
+  return c.json({
+    is_subscribed: hasActiveSubscription(user),
+    status: user.subscription_status || "inactive",
+  });
+});
+
+stripe.post("/webhook", async (c) => {
+  const stripeWebhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  const bodyText = await c.req.text();
+
+  if (stripeWebhookSecret) {
+    const signatureHeader = c.req.header("stripe-signature") || "";
+    const validSignature = await verifyStripeSignature(bodyText, signatureHeader, stripeWebhookSecret);
+    if (!validSignature) {
+      return c.json({ error: "Invalid Stripe signature" }, 400);
+    }
+  }
+  
+  let event: any;
+  try {
+    event = JSON.parse(bodyText);
+  } catch (e) {
+    return c.json({ error: "Invalid JSON payload" }, 400);
+  }
+
+  // Webhook event matching
+  const eventType = event.type;
+  const dataObject = event.data?.object;
+
+  if (eventType === "checkout.session.completed") {
+    const userId = dataObject.client_reference_id;
+    const customerId = dataObject.customer;
+    const subscriptionId = dataObject.subscription;
+    const customerEmail = dataObject.customer_details?.email || dataObject.customer_email;
+
+    if (userId) {
+      await db.execute({
+        sql: "UPDATE users SET is_subscribed = 1, stripe_customer_id = ?, stripe_subscription_id = ?, subscription_status = 'active' WHERE id = ?",
+        args: [customerId || "", subscriptionId || "", userId],
+      });
+    } else if (customerEmail) {
+      await db.execute({
+        sql: "UPDATE users SET is_subscribed = 1, stripe_customer_id = ?, stripe_subscription_id = ?, subscription_status = 'active' WHERE email = ?",
+        args: [customerId || "", subscriptionId || "", customerEmail],
+      });
+    }
+  } else if (eventType === "customer.subscription.deleted" || eventType === "customer.subscription.updated") {
+    const subscriptionId = dataObject.id;
+    const status = dataObject.status;
+    const isSubscribed = status === "active" || status === "trialing" ? 1 : 0;
+
+    await db.execute({
+      sql: "UPDATE users SET is_subscribed = ?, subscription_status = ? WHERE stripe_subscription_id = ? OR stripe_customer_id = ?",
+      args: [isSubscribed, status, subscriptionId, dataObject.customer || ""],
+    });
+  }
+
+  return c.json({ received: true });
+});
+
+app.route("/api/stripe", stripe);
+
 /* ─── Profile routes ────────────────────────────────── */
 const profile = new Hono<Env>();
 
 profile.use("*", async (c, next) => {
-  const user = await getUser(c);
-  if (!user) return c.json({ error: "Unauthorized" }, 401);
-  c.set("user", user);
-  await next();
+  await requireSubscribedUser(c, next);
 });
 
 interface DBStats {
@@ -307,10 +483,7 @@ app.route("/api/profile", profile);
 const habits = new Hono<Env>();
 
 habits.use("*", async (c, next) => {
-  const user = await getUser(c);
-  if (!user) return c.json({ error: "Unauthorized" }, 401);
-  c.set("user", user);
-  await next();
+  await requireSubscribedUser(c, next);
 });
 
 habits.post("/toggle", async (c) => {
@@ -373,10 +546,7 @@ app.route("/api/habits", habits);
 const game = new Hono<Env>();
 
 game.use("*", async (c, next) => {
-  const user = await getUser(c);
-  if (!user) return c.json({ error: "Unauthorized" }, 401);
-  c.set("user", user);
-  await next();
+  await requireSubscribedUser(c, next);
 });
 
 game.post("/loot/claim", async (c) => {
@@ -415,10 +585,7 @@ app.route("/api/game", game);
 const forum = new Hono<Env>();
 
 forum.use("*", async (c, next) => {
-  const user = await getUser(c);
-  if (!user) return c.json({ error: "Unauthorized" }, 401);
-  c.set("user", user);
-  await next();
+  await requireSubscribedUser(c, next);
 });
 
 forum.get("/posts", async (c) => {
@@ -510,10 +677,7 @@ app.route("/api/forum", forum);
 const health = new Hono<Env>();
 
 health.use("*", async (c, next) => {
-  const user = await getUser(c);
-  if (!user) return c.json({ error: "Unauthorized" }, 401);
-  c.set("user", user);
-  await next();
+  await requireSubscribedUser(c, next);
 });
 
 health.get("/", async (c) => {
@@ -695,6 +859,7 @@ app.route("/api/health", health);
 app.get("/api/leaderboard", async (c) => {
   const user = await getUser(c);
   if (!user) return c.json({ error: "Unauthorized" }, 401);
+  if (!hasActiveSubscription(user)) return c.json({ error: "Subscription required" }, 402);
 
   const rows = await db.execute({
     sql: `SELECT u.name, u.class, s.streak, s.faith, s.discipline, s.focus, s.energy, s.purpose
@@ -716,6 +881,7 @@ app.get("/api/content", async (c) => {
 app.post("/api/coach", async (c) => {
   const user = await getUser(c);
   if (!user) return c.json({ error: "Unauthorized" }, 401);
+  if (!hasActiveSubscription(user)) return c.json({ error: "Subscription required" }, 402);
 
   const { history, systemPrompt } = await c.req.json();
 

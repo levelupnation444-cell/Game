@@ -8,6 +8,8 @@ export interface User {
   seen_level_intro: number;
   calorie_goal?: number;
   water_goal?: number;
+  is_subscribed: number;
+  subscription_status?: string;
 }
 
 export interface Stats {
@@ -120,6 +122,10 @@ export const api = {
     sendMagicLink: (email: string) => request<{ ok: boolean }>("/api/auth/magic", { method: "POST", body: JSON.stringify({ email }) }),
     logout: () => request<{ ok: boolean }>("/api/auth/logout", { method: "POST" }),
     me: () => request<{ user: User | null }>("/api/auth/me"),
+  },
+  stripe: {
+    createCheckout: (plan: "monthly" | "yearly") => request<{ url: string }>("/api/stripe/checkout", { method: "POST", body: JSON.stringify({ plan }) }),
+    verifySubscription: () => request<{ is_subscribed: boolean; status: string }>("/api/stripe/verify"),
   },
   profile: {
     get: () => request<ProfileData>("/api/profile"),

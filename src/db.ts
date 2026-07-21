@@ -17,6 +17,10 @@ export async function migrate() {
       seen_level_intro INTEGER DEFAULT 0,
       calorie_goal INTEGER DEFAULT 2000,
       water_goal INTEGER DEFAULT 2500,
+      is_subscribed INTEGER DEFAULT 0,
+      stripe_customer_id TEXT DEFAULT '',
+      stripe_subscription_id TEXT DEFAULT '',
+      subscription_status TEXT DEFAULT 'inactive',
       created_at TEXT DEFAULT (datetime('now'))
     );
 
@@ -122,6 +126,18 @@ export async function migrate() {
   } catch {}
   try {
     await db.execute("ALTER TABLE users ADD COLUMN water_goal INTEGER DEFAULT 2500");
+  } catch {}
+  try {
+    await db.execute("ALTER TABLE users ADD COLUMN is_subscribed INTEGER DEFAULT 0");
+  } catch {}
+  try {
+    await db.execute("ALTER TABLE users ADD COLUMN stripe_customer_id TEXT DEFAULT ''");
+  } catch {}
+  try {
+    await db.execute("ALTER TABLE users ADD COLUMN stripe_subscription_id TEXT DEFAULT ''");
+  } catch {}
+  try {
+    await db.execute("ALTER TABLE users ADD COLUMN subscription_status TEXT DEFAULT 'inactive'");
   } catch {}
 
   console.log("✅ DB migrated with Health tables & goals");
