@@ -126,6 +126,7 @@ export const api = {
   stripe: {
     createCheckout: (plan: "monthly" | "yearly") => request<{ url: string }>("/api/stripe/checkout", { method: "POST", body: JSON.stringify({ plan }) }),
     verifySubscription: () => request<{ is_subscribed: boolean; status: string }>("/api/stripe/verify"),
+    createPortal: () => request<{ url: string }>("/api/stripe/portal", { method: "POST" }),
   },
   profile: {
     get: () => request<ProfileData>("/api/profile"),

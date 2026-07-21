@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import type { ProfileData } from "../api";
+import { api, type ProfileData } from "../api";
 import { CreateScreen } from "./CreateScreen";
 import { useAuth } from "../hooks/useAuth";
 
@@ -10,7 +10,21 @@ interface ProfileScreenProps {
 
 export const ProfileScreen: React.FC<ProfileScreenProps> = ({ profile, onRefresh }) => {
   const [editing, setEditing] = useState(false);
+  const [billingLoading, setBillingLoading] = useState(false);
+  const [billingError, setBillingError] = useState<string | null>(null);
   const { logout } = useAuth();
+
+  const handleBillingPortal = async () => {
+    setBillingLoading(true);
+    setBillingError(null);
+    try {
+      const res = await api.stripe.createPortal();
+      window.location.href = res.url;
+    } catch (e: any) {
+      setBillingError(e.message || "Unable to open subscription settings.");
+      setBillingLoading(false);
+    }
+  };
 
   if (editing) {
     return (
@@ -63,6 +77,25 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ profile, onRefresh
             🚪 Logout
           </button>
         </div>
+      </div>
+
+      <div className="card" style={{ marginBottom: "24px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", gap: "14px", alignItems: "center" }}>
+          <div>
+            <h2 className="headline" style={{ fontSize: "15px", marginBottom: "6px" }}>Subscription</h2>
+            <p style={{ margin: 0, color: "var(--text-3)", fontSize: "12px", fontWeight: 700, textTransform: "capitalize" }}>
+              Status: {profile.user.subscription_status || "active"}
+            </p>
+          </div>
+          <button className="btn ghost small" onClick={handleBillingPortal} disabled={billingLoading}>
+            {billingLoading ? "Opening..." : "Manage"}
+          </button>
+        </div>
+        {billingError && (
+          <p style={{ margin: "12px 0 0", color: "var(--red)", fontSize: "12px", fontWeight: 700 }}>
+            {billingError}
+          </p>
+        )}
       </div>
 
       <div className="card" style={{ marginBottom: "24px", display: "flex", justifyContent: "space-around", textAlign: "center" }}>

@@ -302,6 +302,37 @@ stripe.get("/verify", async (c) => {
   });
 });
 
+stripe.post("/portal", async (c) => {
+  const user = await getUser(c);
+  if (!user) return c.json({ error: "Unauthorized" }, 401);
+
+  if (!user.stripe_customer_id) {
+    return c.json({ error: "No Stripe customer found for this account" }, 400);
+  }
+
+  const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+  if (!stripeSecretKey) {
+    return c.json({ error: "STRIPE_SECRET_KEY is not configured" }, 500);
+  }
+
+  if (!isAbsoluteHttpUrl(APP_URL)) {
+    return c.json({ error: "APP_URL must start with http:// or https://" }, 500);
+  }
+
+  try {
+    const stripeClient = new Stripe(stripeSecretKey);
+    const session = await stripeClient.billingPortal.sessions.create({
+      customer: user.stripe_customer_id,
+      return_url: APP_URL,
+    });
+
+    return c.json({ url: session.url });
+  } catch (e: any) {
+    console.error("Stripe Billing Portal Session error:", e);
+    return c.json({ error: e.message || "Failed to create billing portal session" }, 400);
+  }
+});
+
 stripe.post("/webhook", async (c) => {
   const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
   const stripeWebhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
